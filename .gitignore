@@ -1,0 +1,52 @@
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.brf
+*.fls
+*.fdb_latexmk
+*.log
+*.lot
+*.lof
+*.out
+*.toc
+*.synctex.gz
+*.nav
+*.snm
+*.vrb
+*.idx
+*.ilg
+*.ind
+*.pdf
+*.minted
+
+# Build and temporary files
+*.tmp
+*.temp
+*~
+*.swp
+*.bak
+
+# Git files
+*.orig
+
+# Local configuration
+local_settings.py
+.env
