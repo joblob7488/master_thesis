@@ -1,0 +1,292 @@
+% ------------------------------------
+% Tsetlin Machine
+% ------------------------------------
+
+% first article on TM by Granmo
+@article{GranmoOle-Christoffer2018TTM-,
+abstract = {Although simple individually, artificial neurons provide state-of-the-art
+performance when interconnected in deep networks. Arguably, the Tsetlin
+Automaton is an even simpler and more versatile learning mechanism, capable of
+solving the multi-armed bandit problem. Merely by means of a single integer as
+memory, it learns the optimal action in stochastic environments through
+increment and decrement operations. In this paper, we introduce the Tsetlin
+Machine, which solves complex pattern recognition problems with propositional
+formulas, composed by a collective of Tsetlin Automata. To eliminate the
+longstanding problem of vanishing signal-to-noise ratio, the Tsetlin Machine
+orchestrates the automata using a novel game. Further, both inputs, patterns,
+and outputs are expressed as bits, while recognition and learning rely on bit
+manipulation, simplifying computation. Our theoretical analysis establishes
+that the Nash equilibria of the game align with the propositional formulas that
+provide optimal pattern recognition accuracy. This translates to learning
+without local optima, only global ones. In five benchmarks, the Tsetlin Machine
+provides competitive accuracy compared with SVMs, Decision Trees, Random
+Forests, Naive Bayes Classifier, Logistic Regression, and Neural Networks. We
+further demonstrate how the propositional formulas facilitate interpretation.
+In conclusion, we believe the combinatdion of high accuracy, interpretability,
+and computational simplicity makes the Tsetlin Machine a promising tool for a
+wide range of domains.},
+year = {2018},
+title = {The Tsetlin Machine -- A Game Theoretic Bandit Driven Approach to Optimal Pattern Recognition with Propositional Logic},
+copyright = {http://arxiv.org/licenses/nonexclusive-distrib/1.0},
+language = {eng},
+author = {Granmo, Ole-Christoffer},
+keywords = {Computer Science - Artificial Intelligence ; Computer Science - Computer Vision and Pattern Recognition ; Computer Science - Learning},
+}
+
+% ConvTM
+@article{GranmoOle-Christoffer2019TCTM,
+abstract = {Convolutional neural networks (CNNs) have obtained astounding successes for important pattern recognition tasks, but they suffer from high computational complexity and the lack of interpretability. The recent Tsetlin Machine (TM) attempts to address this lack by using easy-to-interpret conjunctive clauses in
+propositional logic to solve complex pattern recognition problems. The TM provides competitive accuracy in several benchmarks, while keeping the important property of interpretability. It further facilitates hardware-near implementation since inputs, patterns, and outputs are expressed as bits, while recognition and learning rely on straightforward bit manipulation. In this paper, we exploit the TM paradigm by introducing the Convolutional Tsetlin Machine (CTM), as an interpretable alternative to CNNs. Whereas the TM categorizes an image by employing each clause once to the whole image, the CTM uses each clause as a convolution filter. That is, a clause is evaluated multiple times, once per image patch taking part in the convolution. To make
+the clauses location-aware, each patch is further augmented with its coordinates within the image. The output of a convolution clause is obtained simply by ORing the outcome of evaluating the clause on each patch. In the
+learning phase of the TM, clauses that evaluate to 1 are contrasted against the input. For the CTM, we instead contrast against one of the patches, randomly selected among the patches that made the clause evaluate to 1. Accordingly, the standard Type I and Type II feedback of the classic TM can be employed
+directly, without further modification. The CTM obtains a peak test accuracy of 99.4\% on MNIST, 96.31\% on Kuzushiji-MNIST, 91.5\% on Fashion-MNIST, and 100.0\% on the 2D Noisy XOR Problem, which is competitive with results reported for simple 4-layer CNNs, BinaryConnect, Logistic Circuits and an FPGA-accelerated
+Binary CNN.},
+year = {2019},
+title = {The Convolutional Tsetlin Machine},
+copyright = {http://arxiv.org/licenses/nonexclusive-distrib/1.0},
+language = {eng},
+author = {Granmo, Ole-Christoffer and Glimsdal, Sondre and Jiao, Lei and Goodwin, Morten and Omlin, Christian W and Berge, Geir Thore},
+keywords = {Computer Science - Artificial Intelligence ; Computer Science - Learning ; Statistics - Machine Learning},
+}
+
+% CTM (Coalesced TM)
+@article{GlimsdalSondre2021CMTM,
+abstract = {Using finite-state machines to learn patterns, Tsetlin machines (TMs) have obtained competitive accuracy and learning speed across several benchmarks, with frugal memory- and energy footprint. A TM represents patterns as conjunctive clauses in propositional logic (AND-rules), each clause voting for or against a particular output. While efficient for single-output problems, one needs a separate TM per output for multi-output problems. Employing multiple TMs hinders pattern reuse because each TM then operates in a silo. In this paper, we introduce clause sharing, merging multiple TMs into a single one. Each clause is related to each output by using a weight. A positive weight makes the clause vote for output$1$ , while a negative weight makes the clause vote for output$0$ . The clauses thus coalesce to produce multiple outputs. The resulting coalesced Tsetlin Machine (CoTM) simultaneously learns both the weights and the composition of each clause by employing interacting Stochastic Searching on the Line (SSL) and Tsetlin Automata (TA) teams. Our empirical results on MNIST, Fashion-MNIST, and Kuzushiji-MNIST show that CoTM obtains significantly higher accuracy than TM on$50$ - to$1$ K-clause configurations, indicating an ability to repurpose clauses. E.g., accuracy goes from$71.99$ \% to$89.66$ \% on Fashion-MNIST when employing$50$clauses per class (22 Kb memory). While TM and CoTM accuracy is similar when using more than$1$ K clauses per class, CoTM reaches peak accuracy$3\times$faster on MNIST with$8$ K clauses. We further investigate robustness towards imbalanced training data. Our evaluations on imbalanced versions of IMDb- and CIFAR10 data show that CoTM is robust towards high degrees of class imbalance. Being able to share clauses, we believe CoTM will enable new TM application domains that involve multiple outputs, such as learning language models and auto-encoding.},
+year = {2021},
+title = {Coalesced Multi-Output Tsetlin Machines with Clause Sharing},
+copyright = {http://arxiv.org/licenses/nonexclusive-distrib/1.0},
+language = {eng},
+author = {Glimsdal, Sondre and Granmo, Ole-Christoffer},
+keywords = {Computer Science - Artificial Intelligence ; Computer Science - Learning},
+}
+
+% Dedikert Vanilla TM på FPGA
+@article{WheeldonAdrian2020Labe,
+issn = {1364-503X},
+abstract = {Energy efficiency continues to be the core design challenge for artificial intelligence (AI) hardware designers. In this paper, we propose a new AI hardware architecture targeting Internet of Things applications. The architecture is founded on the principle of learning automata, defined using propositional logic. The logic-based underpinning enables low-energy footprints as well as high learning accuracy during training and inference, which are crucial requirements for efficient AI with long operating life. We present the first insights into this new architecture in the form of a custom-designed integrated circuit for pervasive applications. Fundamental to this circuit is systematic encoding of binarized input data fed into maximally parallel logic blocks. The allocation of these blocks is optimized through a design exploration and automation flow using field programmable gate array-based fast prototypes and software simulations. The design flow allows for an expedited hyperparameter search for meeting the conflicting requirements of energy frugality and high accuracy. Extensive validations on the hardware implementation of the new architecture using single- and multi-class machine learning datasets show potential for significantly lower energy than the existing AI hardware architectures. In addition, we demonstrate test accuracy and robustness matching the software implementation, outperforming other state-of-the-art machine learning algorithms.
+This article is part of the theme issue ‘Advanced electromagnetic non-destructive evaluation and smart monitoring’.},
+journal = {Philosophical transactions of the Royal Society of London. Series A: Mathematical, physical, and engineering sciences},
+pages = {20190593},
+volume = {378},
+publisher = {The Royal Society Publishing},
+number = {2182},
+year = {2020},
+title = {Learning automata based energy-efficient AI hardware design for IoT applications},
+copyright = {2020 The Authors. 2020},
+language = {eng},
+author = {Wheeldon, Adrian and Shafik, Rishad and Rahman, Tousif and Lei, Jie and Yakovlev, Alex and Granmo, Ole-Christoffer},
+}
+
+% Dedikert TM implementert på FPGA (Conv)
+@article{TunheimSveinAnders2023CTMT,
+issn = {0141-9331},
+abstract = {The Tsetlin Machine (TM) is a machine learning algorithm based on an ensemble of Tsetlin Automata (TAs) that learns propositional logic expressions from Boolean input features. In this paper, the design and implementation of a Field Programmable Gate Array (FPGA) accelerator based on the Convolutional Tsetlin Machine (CTM) is presented. The accelerator performs classification of two pattern classes in 4 × 4 Boolean images with a 2 × 2 convolution window. Specifically, there are two separate TMs, one per class. Each TM comprises 40 propositional logic formulas, denoted as clauses, which are conjunctions of literals. Include/exclude actions from the TAs determine which literals are included in each clause. The accelerator supports full training, including random patch selection during convolution based on parallel reservoir sampling across all clauses. The design is implemented on a Xilinx Zynq XC7Z020 FPGA platform. With an operating clock speed of 40 MHz, the accelerator achieves a classification rate of 4.4 million images per second with an energy per classification of 0.6 \mu J. The mean test accuracy is 99.9\% when trained on the 2-dimensional Noisy XOR dataset with 40\% noise in the training labels. To achieve this performance, which is on par with the original software implementation, Linear Feedback Shift Register (LFSR) random number generators of minimum 16 bits are required. The solution demonstrates the core principles of a CTM and can be scaled to operate on multi-class systems for larger images.
+ First fully functional Convolutional Tsetlin Machine (CTM) hardware accelerator. The accelerator is self-contained and supports full training. Random patch selection, based on parallel reservoir sampling across all clauses, during training. Test accuracy matches the corresponding software implementation. Prepared for scaling to support multi-class systems and classification of larger images.},
+journal = {Microprocessors and microsystems},
+pages = {104949},
+volume = {103},
+publisher = {Elsevier B.V},
+year = {2023},
+title = {Convolutional Tsetlin Machine-based Training and Inference Accelerator for 2-D Pattern Classification},
+copyright = {2023 The Authors},
+language = {eng},
+author = {Tunheim, Svein Anders and Jiao, Lei and Shafik, Rishad and Yakovlev, Alex and Granmo, Ole-Christoffer},
+keywords = {Accelerator ; FPGA ; Machine learning ; Pattern classification ; Tsetlin machine},
+}
+
+% Dedikert TM implementert på FPGA (Coalesced)
+@article{TunheimSveinAnders2025TMIC,
+issn = {1549-8328},
+abstract = {The Tsetlin Machine (TM) is a novel machine learning algorithm that uses Tsetlin automata (TAs) to define propositional logic expressions (clauses) for classification. This paper describes a field-programmable gate array (FPGA) accelerator for image classification based on the Convolutional Coalesced Tsetlin Machine. The accelerator classifies booleanized images of 28 \times 28 pixels into 10 classes, and is configured with 128 clauses in a highly parallel architecture. To achieve fast clause evaluation and class prediction, the TA action signals and the clause weights per class are available from registers. Full on-device training is included, and the TAs are implemented with 34 Block RAM (BRAM) instances which operate in parallel. Each BRAM is addressed by the clause number and has a 72-bit word width that supports 8 TAs. The design is implemented in a Xilinx Zynq Ultrascale+ XCZU7 FPGA. Running at 50 MHz, the accelerator core achieves 134k image classifications per second, with an energy consumption per classification of <inline-formula> <tex-math notation=""LaTeX"">13.3~\mu </tex-math></inline-formula> J. A single training epoch of 60k samples requires a processing time of 1.5 seconds. The accelerator obtains a test accuracy of 97.6\% on MNIST, 84.1\% on Fashion-MNIST and 82.8\% on Kuzushiji-MNIST.},
+journal = {IEEE transactions on circuits and systems. I, Regular papers},
+pages = {830--843},
+volume = {72},
+publisher = {IEEE},
+number = {2},
+year = {2025},
+title = {Tsetlin Machine-Based Image Classification FPGA Accelerator With On-Device Training},
+copyright = {Copyright The Institute of Electrical and Electronics Engineers, Inc. (IEEE) 2025},
+language = {eng},
+address = {New York},
+author = {Tunheim, Svein Anders and Jiao, Lei and Shafik, Rishad and Yakovlev, Alex and Granmo, Ole-Christoffer},
+keywords = {accelerator ; Accuracy ; Algorithms ; Architecture ; Classification ; CMOS technology ; Convolution ; Energy consumption ; Energy efficiency ; Field programmable gate arrays ; FPGA ; Image classification ; Image processing systems ; Learning automata ; Machine learning ; Power demand ; Training ; Transformers ; Tsetlin machine},
+}
+
+% ASIC TM
+@article{AndersTunheimSvein2025AA86,
+issn = {1549-8328},
+abstract = {We present an all-digital programmable machine learning accelerator chip for image classification, underpinning on the Tsetlin machine (TM) principles. The TM is an emerging machine learning algorithm founded on propositional logic, utilizing sub-pattern recognition expressions called clauses. The accelerator implements the coalesced TM version with convolution, and classifies booleanized images of <inline-formula> <tex-math notation=""LaTeX"">28\times 28</tex-math> </inline-formula> pixels with 10 categories. A configuration with 128 clauses is used in a highly parallel architecture. Fast clause evaluation is achieved by keeping all clause weights and Tsetlin automata (TA) action signals in registers. The chip is implemented in a 65 nm low-leakage CMOS technology, and occupies an active area of 2.7 mm 2 . At a clock frequency of 27.8 MHz, the accelerator achieves 60.3 k classifications per second, and consumes 8.6 nJ per classification. This demonstrates the energy-efficiency of the TM, which was the main motivation for developing this chip. The latency for classifying a single image is <inline-formula> <tex-math notation=""LaTeX"">25.4~\mu </tex-math> </inline-formula>s which includes system timing overhead. The accelerator achieves 97.42\%, 84.54\% and 82.55\% test accuracies for the datasets MNIST, Fashion-MNIST and Kuzushiji-MNIST, respectively, matching the TM software models.},
+journal = {IEEE transactions on circuits and systems. I, Regular papers},
+pages = {1--14},
+publisher = {IEEE},
+year = {2025},
+title = {An All-Digital 8.6-nJ/Frame 65-nm Tsetlin Machine Image Classification Accelerator},
+language = {eng},
+author = {Anders Tunheim, Svein and Zheng, Yujin and Jiao, Lei and Shafik, Rishad and Yakovlev, Alex and Granmo, Ole Christoffer},
+keywords = {accelerator ; Accuracy ; CMOS technology ; Convolution ; Energy efficiency ; Field programmable gate arrays ; Image classification ; Machine learning ; Neural networks ; Power demand ; Training ; Tsetlin machine},
+}
+
+
+% ------------------------------------
+% Acceleration (HW/Processor oriented)
+% ------------------------------------
+
+% risv-v vector extension
+@book{NunesWillianAnaldo2025AMLw,
+series = {2025 IEEE International Symposium on Circuits and Systems (ISCAS)},
+issn = {0271-4310},
+pages = {43--5},
+publisher = {IEEE},
+booktitle = {2025 IEEE International Symposium on Circuits and Systems (ISCAS)},
+isbn = {979-835035683-0},
+year = {2025},
+title = {Accelerating Machine Learning with RISC-V Vector Extension and Auto-Vectorization Techniques},
+author = {Nunes, Willian Analdo and Vinicius Corrêa Dos Santos, Antônio and Moraes, Fernando Gehm},
+}
+
+% custom isa extension for CNNs
+@article{WangShihang2024OCCU,
+issn = {0018-9340},
+abstract = {Benefit from the custom instruction extension capabilities, RISC-V architecture can be optimized for many domain-specific applications. In this paper, we propose seven RISC-V SIMD (single instruction multiple data) custom instructions that can significantly optimize the convolution, activation and pool operations in CNN inference computation. More specifically, instruction CONV23 can greatly speed up the operation of F(2 \times 2, 3 \times 3). With the adoption of Winograd algorithm, the number of multiplications can be reduced from 36 to 16, and the execution time is also reduced from 140 to 21 clock cycles. These custom instructions can be executed in batch mode within the acceleration module where the immediate data can be reused, so the latency and energy overhead associated with excess memory accesses can be eliminated. Using inline assembler in C language, the custom instructions can be called and compiled together with C source code. A revised RISC-V processor, RI5CY-Accel is constructed on FPGA to accommodate these custom instructions. Revised LeNet-5, VGG16 and ResNet18 model; called LeNet-Accel, VGG16-Accel and ResNet18-Accel are also optimized based on RI5CY-Accel architecture. Benchmark experiments demonstrated that the inference of LeNet-Accel, VGG16-Accel and ResNet18-Accel based on RI5CY-Accel can greatly reduce the execution latency by over 76.6\%, 88.8\% and 87.1\%, with the total energy consumption saving of 74.8\%, 87.8\% and 85.1\% respectively.},
+journal = {IEEE transactions on computers},
+pages = {1371--1384},
+volume = {73},
+publisher = {IEEE},
+number = {5},
+year = {2024},
+title = {Optimizing CNN Computation Using RISC-V Custom Instruction Sets for Edge Platforms},
+copyright = {Copyright The Institute of Electrical and Electronics Engineers, Inc. (IEEE) 2024},
+language = {eng},
+address = {New York},
+author = {Wang, Shihang and Wang, Xingbo and Xu, Zhiyuan and Chen, Bingzhen and Feng, Chenxi and Wang, Qi and Ye, Terry Tao},
+keywords = {Acceleration ; Algorithms ; CNN ; Convolution ; Convolutional neural networks ; edge computing ; Energy consumption ; Hardware ; Inference ; Instruction sets (computers) ; Kernel ; Microprocessors ; Neural networks ; Optimization ; Registers ; RISC ; RISC-V ; RISC-V custom instruction sets ; Source code ; Task analysis ; Winograd},
+}
+
+% simd extensions for edge ai
+@article{GarofaloAngelo2021XEEE,
+issn = {2168-6750},
+journal = {IEEE transactions on emerging topics in computing.},
+pages = {1489--1505},
+volume = {9},
+publisher = {Institute of Electrical and Electronics Engineers},
+number = {3},
+year = {2021},
+title = {XpulpNN: Enabling Energy Efficient and Flexible Inference of Quantized Neural Networks on RISC-V Based IoT End Nodes},
+address = {New York, N.Y. :},
+author = {Garofalo, Angelo and Tagliavini, Giuseppe and Conti, Francesco and Benini, Luca and Rossi, Davide},
+}
+
+
+% ------------------------------------
+% Others
+% ------------------------------------
+
+@ARTICLE{Lecun2015436,
+	author = {Lecun, Yann and Bengio, Yoshua and Hinton, Geoffrey},
+	title = {Deep learning},
+	year = {2015},
+	journal = {Nature},
+	volume = {521},
+	number = {7553},
+	pages = {436 – 444},
+	doi = {10.1038/nature14539},
+	abstract = {Deep learning allows computational models that are composed of multiple processing layers to learn representations of data with multiple levels of abstraction. These methods have dramatically improved the state-of-the-art in speech recognition, visual object recognition, object detection and many other domains such as drug discovery and genomics. Deep learning discovers intricate structure in large data sets by using the backpropagation algorithm to indicate how a machine should change its internal parameters that are used to compute the representation in each layer from the representation in the previous layer. Deep convolutional nets have brought about breakthroughs in processing images, video, speech and audio, whereas recurrent nets have shone light on sequential data such as text and speech. © 2015 Macmillan Publishers Limited. All rights reserved.},
+	keywords = {Algorithms; Artificial Intelligence; Computers; Language; Neural Networks (Computer); data processing; data set; machine learning; parameterization; automatic speech recognition; classifier; deep learning; human; image processing; language processing; learning; learning algorithm; learning theory; machine learning; nonhuman; pattern recognition; priority journal; recognition; Review; speech discrimination; algorithm; artificial intelligence; artificial neural network; computer; language; trends},
+	type = {Review},
+	publication_stage = {Final},
+	source = {Scopus},
+	note = {Cited by: 70606}
+}
+
+@article{RudinCynthia2019Sebb,
+abstract = {Black box machine learning models are currently being used for high-stakes decision making throughout society, causing problems in healthcare, criminal justice and other domains. Some people hope that creating methods for explaining these black box models will alleviate some of the problems, but trying to explain black box models, rather than creating models that are interpretable in the first place, is likely to perpetuate bad practice and can potentially cause great harm to society. The way forward is to design models that are inherently interpretable. This Perspective clarifies the chasm between explaining black boxes and using inherently interpretable models, outlines several key reasons why explainable black boxes should be avoided in high-stakes decisions, identifies challenges to interpretable machine learning, and provides several example applications where interpretable models could potentially replace black box models in criminal justice, healthcare and computer vision.
+There has been a recent rise of interest in developing methods for ‘explainable AI’, where models are created to explain how a first ‘black box’ machine learning model arrives at a specific decision. It can be argued that instead efforts should be directed at building inherently interpretable models in the first place, in particular where they are applied in applications that directly affect human lives, such as in healthcare and criminal justice.},
+author = {Rudin, Cynthia},
+address = {London},
+copyright = {Springer Nature Limited 2019},
+issn = {2522-5839},
+journal = {Nature machine intelligence},
+keywords = {4014/4002 ;  4014/4045 ;  639/705/117 ;  639/705/531 ;  Machine learning ;  Accuracy ;  Algorithms ;  Artificial intelligence ;  Boxes ;  Computer vision ;  Crime ;  Data science ;  Datasets ;  Decision making ;  Deep learning ;  Engineering ;  Health care ;  Knowledge discovery ;  Mathematical models ;  Perspective ;  Sparsity},
+language = {eng},
+number = {5},
+pages = {206-215},
+publisher = {Nature Publishing Group UK},
+title = {Stop explaining black box machine learning models for high stakes decisions and use interpretable models instead},
+volume = {1},
+year = {2019},
+}
+
+@article{Tsetlin1961,
+  author = {Tsetlin, M. L.},
+  title = {On behaviour of finite automata in random medium},
+  journal = {Avtomat. i Telemekh.},
+  year = {1961},
+  volume = {22},
+  number = {10},
+  pages = {1345--1354},
+  url = {https://m.mathnet.ru/php/archive.phtml?wshow=paper&jrnid=at&paperid=12417&option_lang=eng}
+}
+
+@techreport{AsanovicPatterson2014,
+  author = {Asanovi\'{c}, Krste and Patterson, David A.},
+  title = {Instruction Sets Should Be Free: The Case for {RISC-V}},
+  institution = {EECS Department, University of California, Berkeley},
+  year = {2014},
+  number = {UCB/EECS-2014-146},
+  url = {https://www2.eecs.berkeley.edu/Pubs/TechRpts/2014/EECS-2014-146.pdf}
+}
+
+@techreport{WatermanLee2011,
+  author = {Waterman, Andrew and Lee, Yunsup and Patterson, David A. and Asanovi\'{c}, Krste},
+  title = {The {RISC-V} Instruction Set Manual, Volume I: Base User-Level {ISA}},
+  institution = {EECS Department, University of California, Berkeley},
+  year = {2011},
+  number = {UCB/EECS-2011-62},
+  url = {https://www2.eecs.berkeley.edu/Pubs/TechRpts/2011/EECS-2011-62.pdf}
+}
+
+@misc{Nolting2024NEORV32,
+  author = {Nolting, Stephan},
+  title = {{NEORV32}: A small, customizable and extensible {MCU}-class 32-bit {RISC-V} soft-core {CPU} and microcontroller-like {SoC}},
+  year = {2024},
+  publisher = {GitHub},
+  howpublished = {\url{https://github.com/stnolting/neorv32}},
+  note = {Accessed: 2026-01-09}
+}
+
+@misc{Nolting2024UserGuide,
+  author = {Nolting, Stephan},
+  title = {{NEORV32} User Guide},
+  year = {2024},
+  howpublished = {\url{https://stnolting.github.io/neorv32/ug/}},
+  note = {Online documentation, Accessed: 2026-01-09}
+}
+
+@misc{Nolting2024Datasheet,
+  author = {Nolting, Stephan},
+  title = {{NEORV32} Datasheet},
+  year = {2024},
+  howpublished = {\url{https://stnolting.github.io/neorv32/}},
+  note = {Online documentation, Accessed: 2026-01-09}
+}
+
+@misc{CAIR2024TsetlinMachineC,
+  author = {{Centre for Artificial Intelligence Research (CAIR)}},
+  title = {{TsetlinMachineC}: A {C} implementation of the {Tsetlin Machine}},
+  year = {2024},
+  publisher = {GitHub},
+  howpublished = {\url{https://github.com/cair/TsetlinMachineC}},
+  note = {Accessed: 2026-01-09}
+}
+
+@article{Trimberger1995,
+  author = {Trimberger, Stephen M.},
+  title = {Field-programmable gate array technology},
+  journal = {Communications in Numerical Methods in Engineering},
+  year = {1995},
+  volume = {11},
+  number = {5},
+  pages = {405--413},
+  doi = {10.1002/cnm.1640110511},
+  url = {https://onlinelibrary.wiley.com/doi/10.1002/cnm.1640110511}
+}

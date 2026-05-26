@@ -1,0 +1,9 @@
+
+The Tsetlin Machine (TM) is an interpretable machine learning algorithm based on propositional logic and finite-state automata. While its Boolean operations make it well-suited for hardware acceleration, existing implementations rely on fixed-function FPGA or ASIC designs that lack flexibility and require significant redesign for different TM variants. This project explores processor-oriented acceleration as an alternative approach, implementing a custom RISC-V instruction to accelerate TM inference while maintaining programmability.
+
+A custom instruction for clause evaluation was designed and implemented using the NEORV32's Custom Functions Unit (CFU) on a Xilinx Artix-7 100T FPGA. The instruction realizes complete clause evaluation logic as a single combinatorial hardware operation. The implementation was evaluated using a trained TM model for binary classification on the Noisy XOR dataset, containing 2 classes with 10 clauses per class operating on 12 binary features.
+
+Performance measurements demonstrate substantial acceleration with minimal hardware overhead. Inference operations improve from 8692 clock cycles for the baseline software implementation, to 1968 clock cycles for the CFU-accelerated implementation, achieving a 4.42× speedup and enabling 50.94k classifications per second compared to 11.55k. This comes at a negligible resource cost of 18 LUTs and 3 flip-flops, considering the NEORV32 processor already uses 1953 LUTs and 1448 flip-flops.
+
+The results demonstrate that processor-oriented acceleration through custom instructions provides meaningful performance improvements while preserving programmability and flexibility. Unlike fiex-function accelerators, this approach maintains the ability to execute arbitrary code and adapt to different TM architectures without hardware redesign, offering a practical balance between performance and flexibility for edge inference applications.
+

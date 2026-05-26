@@ -1,0 +1,67 @@
+
+
+\subsection{The Tsetlin Machine}
+\label{seq:tmbackground}
+The Tsetlin Machine (TM) was invented by Ole-Christoffer Granmo, who introduced it in 2018\cite{GranmoOle-Christoffer2018TTM-}. The TM is a machine learning algorithm which can solve complex pattern recognition problems by using propositional logic and finite-state automata. Unlike Neural Networks (NNs) which learn continuous-valued weights, the TM learns patterns in the form of Boolean expressions, called clauses. These patterns are constructed with collections of Tsetlin Automata (TAs)\cite{Tsetlin1961}, which determine what propositional properties are relevant to the learning task at hand. The fundamental concepts of how TMs work are described in Section \ref{sec:tmtheory}.
+
+As Granmo notes in his paper \cite{GranmoOle-Christoffer2018TTM-}, the TM architecture can be expressed with bits, and all computations as bitwise operations. This design enables the TM to achieve low computational complexity while providing competitive accuracy compared to more classical learning algorithms like Support Vector Machines (SVMs), Logistic Regression and Neural Networks (NN) \cite{GranmoOle-Christoffer2018TTM-}. The boolean nature of the patterns
+which the TM learns also makes it transparent and explainable, avoiding the black-box problem commonly associated with deep learning algorithms \cite{RudinCynthia2019Sebb}. This is also highlighted by the author in their paper from 2019 \cite{GranmoOle-Christoffer2019TCTM}, where he points out how interpretability is crucial for high stakes decisions. Finally, the combination of explainability and binary logic makes it a natural candidate for HW implementation.
+
+The TM performs well on tabular datasets, outperforming Naive Bayes, Logistic Regression, SVM and Multilayer Perceptron Networks on 4 of the 5 datasets tested in Granmos 2018 paper \cite{GranmoOle-Christoffer2018TTM-}. It is however outperformed by a 2-layer NN when tested on the MNIST dataset, which differs from the other datasets as it contains spatial data.
+
+\subsubsection{Convolutional Tsetlin Machine}
+
+Extending the \textit{vanilla} Tsetlin Machine to better process spatial data, like images, a paper was released in 2019 detailing the Convolutional Tsetlin Machine (CTM) \cite{GranmoOle-Christoffer2019TCTM}. Like the names suggests, the CTM introduces convolution into the TM framework. Whereas the vanilla TM applies each clause once to an entire image, the CTM would use each clause as a convolution filter, applying it multiple times to smaller patches of the image. 
+
+The CTM is introduced as an interpretable and transparent alternative to Convolutional Neural Networks (CNN). The author notes CNNs as being the dominant algorithm in the field of computer vision. Similar to how the TM differentiated itself from DNNs, it is pointed out that a well-known disadvantage of CNNs are the fact that they are complex and non-transparent, leading to limited knowledge on why they perform so well and how they can be further improved. The CTM however, keeps the transparent and interpretable nature from its predecessor. The CTM also achieves significantly higher accuracy on spatial datasets like MNIST, with an accuracy of 99.4\% compared to the TM's 98.6\%. It also outperformed a 4-layer Simple CNN, with an accuracy of 99.1\%, which is significant considering the CTM presented in the paper was only single-layer. 
+
+\subsubsection{Coalesced Tsetlin Machine}
+
+The CTM effectively extended the TM to better process spatial data, however there were still limitations with the TM framework to be addressed. While effective for single-output problems, multi-output problems require multiple TMs (or CTMs), one per output. Using the previously mentioned MNIST dataset as an example, containing images of handwritten numbers from 0 to 9, a separate TM is needed for each of the ten classes. Because each model operates in isolation, they cannot reuse patterns across outputs, which can lead to redundancy, inefficient memory usage and hinder scalability. 
+
+To address these issues, the Coalesced Tsetlin Machine (CoTM)  was introduced\cite{GlimsdalSondre2021CMTM}. The CoTM introduces clause sharing, merging multiple TMs. Instead of each clause being related to a single output, clauses are related to multiple different outputs using weights. This design reduces the total amount of clauses and TAs, while retaining or even improving accuracy in some cases. 
+
+The biggest strength of the CoTM is its ability achieve high accuracy with fewer clauses. The most significant example from the CoTM paper was found when using only 50 clauses per class on the Fashion-MNIST dataset, where a Weighted CTM achieved an accuracy of 71.99\% and a Convolutional CoTM 89.66\%. By comparing with the original TM, we can better see the difference in how memory is used more effectively. In the original paper by Granmo from 2018 \cite{GranmoOle-Christoffer2018TTM-}, a vanilla TM with 4000 clauses per class achieved an accuracy of 98.57\%, with a model size of 7657 kB, as noted in \cite{GranmoOle-Christoffer2019TCTM}. To achieve a similar accuracy of 98.80\% the CoTM only needs 100 clauses per class, resulting in a model size of 44 kB \cite{GlimsdalSondre2021CMTM}, a 174 times reduction compared to the original. 
+
+
+The evolution from the vanilla TM to the CTM and CoTM highlights a clear trajectory towards scalable and efficient machine learning architectures. The properties of the TM framework, interpretability, high accuracy, reduced computational and memory requirements, makes it particularly well-suited for hardware (HW) acceleration, where compact, low-power logic-based models are highly advantageous.
+\newpage
+\subsection{Hardware Realizations of the Tsetlin Machine}
+
+\subsubsection{Early Hardware Realization}
+
+With interest in Tsetlin Machines growing, the next natural step was exploring their suitability for HW acceleration. While most early work focused on algorithmic development and performance benchmarking in software (SW), the first realized HW implementation appeared in 2020 \cite{WheeldonAdrian2020Labe}. The design was implemented on both a 65nm ASIC and an Altera Stratix IV FPGA. 
+
+The architecture is capable of on-device learning, rather than inference-only acceleration, which enables autonomous model adaptation for edge devices. This is achieved by using parallel clause updates and stochastic reinforcement learning for the TAs, achieved by implementing lightweight pseudo-random number generators. The architecture demonstrates competitive accuracy and high energy efficiency, outperforming a Convolutional Binary Neural Networks (CBNN) by 2.5 $\times$ in terms of energy per operation. However, when comparing accuracy to a TM implemented in SW, the FPGA and ASIC models fall short, only reaching around $\approx92.3\%$ on the Iris dataset, with the SW TM achieving $\approx96.2\%$ (exact numbers not given). This is attributed to the difference in random number generators, a key component in the stochastic learning process, with SW using higher precision. The gap in accuracy might also be compounded by other factors, as it is quite large, but we will better see the importance of stochastic precision in the next section. Nevertheless, the work demonstrates how the core mechanisms of the TM framework can be implemented.
+
+\subsubsection{Convolutional Tsetlin Machine in Hardware}
+
+The first reported HW accelerator for the CTM was presented in 2023 \cite{TunheimSveinAnders2023CTMT}. Like the design from 2020, it supports both inference and full on-device learning, targeting binary image pattern classification in $4 \times 4$ Boolean images using a $2 \times 2$ convolution window. As it is made for binary classification, it uses two TMs, each having 40 clauses, and utilizes reservoir sampling for patch generation during training. For random number generation the design uses 16-bit long Linear Feedback Shift Registers (LFSR). 
+
+The design demonstrates significant throughput advantages over SW implementations, achieving up to 4.4 million classifications per second when operating with a clock frequency of 40 MHz. The design is compared with a SW implementation running a CPU operating at 2.7 GHz. The HW implementation had throughput 13.3 times higher for inference, and 12.1 times for training. The authors also did testing to find the optimal lengths for the LFSRs, testing for lengths of 6, 7, 8, 9, 10, 12, 14, 16, 18 and 24 bits. The results are shown in table \ref{tab:lfsrlengths}.
+
+
+\begin{table}[H]
+\centering
+
+\caption{Classification accuracy of CTM, for varying LFSR lengths.}
+\label{tab:lfsrlengths}
+\begin{tabular}{l|llllllll}
+\hline
+LFSR length (bits)      & 6      & 8      & 10    & 12    & 12    & 16    & 18    & 24    \\ \hline
+Mean accuracy (\%) & 84.51 & 99.67 & 99.62 & 99.42 & 99.48 & 99.99 & 99.95 & 99.88 \\ \hline
+\end{tabular}
+\end{table}
+
+
+For LFSR lengths of 16, the accelerator achieves the same accuracy achieved by the SW implementation of the CTM described in \cite{GranmoOle-Christoffer2019TCTM}. Decreasing lengths leads to worse accuracy, however curiously this also seems to happen if the LFSR length is increased beyond 16 bits, which is not noted by the authors. Nevertheless, this underscores the importance of stochasticity, which is also pointed out in the 2020 design.
+
+While this work demonstrates the feasibility of CTM acceleration, its scalability is limited due to needing more TMs per new class. Subsequent work therefore focuses on CoTM architectures better suited for multi-class classification.
+
+\subsubsection{Coalesced Tsetlin Machine in Hardware}
+
+The first realized HW accelerator for the Convolutional CoTM (ConvCoTM) was presented in 2025 as an FPGA accelerator \cite{TunheimSveinAnders2025TMIC}. The accelerator targets 28x28 grayscale images and ten output classes, with 128 clauses. The TA states and clause weights are stored in registers for fast prediction. Operating at 50MHz on a Xilinx Zynq ZU7EV the accelerator achieves 134k classifications per second and 13.3$\mu$ J of energy per classification (EPC), while maintaining competitive accuracy across MNIST, F-MNIST and KMNIST. Supporting full on-device learning, the accelerator completes a full training cycle (60k samples) in approximately 1.5s. 
+
+Later the same year, a ConvCoTM implementation was fabricated on 65 nm ASIC, presented in \cite{AndersTunheimSvein2025AA86}. Instead of targeting grayscale images, it targets booleanized 28x28 images and stores TA states in flip-flops instead of registers, but keeps the amount of output classes and clauses. The biggest difference however is that the ASIC implementation is inference-only. This is likely due to the complexity of implementing on-device learning, and as the author states, their main motivation for developing the chip was to demonstrate the energy efficiency of the TM. Operating at a clock frequency of 27.8MHz, the accelerator achieves 60.3k classifications per second and just 8.6 nJ EPC, one of the lowest EPCs to date.
+
+In the two 2025 papers, both the FPGA and ASIC solution have their results compared to state-of-the-art ML HW, showing how both solutions strike a distinct balance between accuracy, performance and energy efficiency. In the case of the FPGA solution, the competitive results are impressive considering the on-device learning it offers, a capability seldom provided by other edge-AI accelerators. The ASIC offers extremely low EPC, only outperformed by a model with far lower throughput implemented on 28 nm CMOS. Together, these solutions show how ConvCoTM accelerators carve out a niche in the edge-AI space, offering interpretable, on-device learning and high energy-efficiency, without sacrificing accuracy and speed.

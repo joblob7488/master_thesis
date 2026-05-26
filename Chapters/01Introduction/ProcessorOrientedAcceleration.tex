@@ -1,0 +1,27 @@
+\subsection{Processor-Oriented Acceleration Approaches}
+
+Recent research has explored processor-based acceleration as an alternative to fixed-function hardware. 
+In contrast to dedicated FPGA and ASIC designs, processor-oriented approaches aim to balance performance, programmability, and architectural flexibility. 
+RISC-V has emerged as a particularly attractive platform for such exploration due to its open ISA and support for domain-specific extensions. The following works show approaches to accelerating ML computations on RISC-V through vector extensions, compiler support, and custom instructions, offering insights into how similar strategies may enable efficient processor-oriented TM acceleration.
+
+
+\subsubsection{RISC-V Vector Extensions and Compiler-Driven Acceleration}
+
+A study investigating how the RISC-V Vector Extension (RVV) together with compiler-based auto-vectorization can accelerate machine learning kernels shows promising results \cite{NunesWillianAnaldo2025AMLw}. The RISC-V Vector Extension provides a scalable Single Instruction, Multiple Data (SIMD) execution model, where a single instruction operates on multiple data elements in parallel. Unlike traditional fixed-width SIMD found in other architectures, RVV supports a flexible vector length that adapts to the underlying hardware.
+
+The authors use this architectural flexibility through compiler-assisted vectorization, where the compiler automatically identifies parallelizable operations in high-level C/C++ code and maps them to RVV vector instructions. This avoids the need for hand-optimized assembly, and enables developers to benefit from parallelism without manual optimization effort during development. Specifically, toolchain enhancements in GCC and LLVM are used to vectorize key linear algebra and activation kernels, demonstrating measurable performance gains across a range of ML workloads.
+
+Although the Tsetlin Machine (TM) primarily relies on bit-level pattern evaluation rather than arithmetic-heavy operations, this study highlights an important principle relevant to TM acceleration: compiler support can expose and exploit parallelism automatically, reducing reliance on bespoke hardware logic. A similar strategy could be explored for the TM, where clause evaluation and TA state updates could be parallelized through RVV.
+
+\subsubsection{Custom RISC-V ISA Extensions for ML Acceleration}
+A proposed set of custom RISC-V SIMD instructions designed to speed up convolution, activation, and pooling operations used in neural networks demonstrates this approach \cite{WangShihang2024OCCU}. Instead of relying on large, complex accelerator structures, the authors add a small set of specialized instructions that can process multiple data values in parallel. This approach results in meaningful speed and energy efficiency improvements on FPGA-based edge systems, while still keeping the overall processor design relatively lightweight and flexible.
+
+A similar idea could be applied to Tsetlin Machines, where operations such as clause evaluation, bit counting, and automaton updates could be accelerated by introducing targeted instruction support inside the processor. This would allow TM computations to run more efficiently without requiring a fully dedicated hardware accelerator.
+
+\subsubsection{Lightweight SIMD Extensions for Embedded ML}
+XpulpNN extends a RISC-V core with instructions designed to speed up neural network inference on small, low-power processors \cite{GarofaloAngelo2021XEEE}.  The key idea is to process very small data values in parallel, for example 8-, 4-, or even 2-bit values, instead of using standard 32-bit operations. Due to many embedded ML models using heavily quantized weights and activations, this allows multiple values to be packed into one register and processed at the same time, improving speed and reducing energy use. The design achieves performance close to dedicated accelerators, while still keeping the flexibility of a programmable processor.
+
+The approach used in XpulpXX is interesting for TMs, as TM learning is based on simple Boolean logic and tiny automaton states. A similar strategy, where TA states are packed together and updating in parallel, could allow TM workloads to benefit from small custom instructions without needing large or complex hardware.
+Compared to the two previous approaches, which rely on vector units or compiler support, this work shows how very compact instruction extensions can still provide strong acceleration for edge devices, making it a promising reference for lightweight TM instruction support.
+
+Together, these works demonstrate a spectrum of RISC-V acceleration strategies, from general-purpose vector extensions to tightly integrated domain-specific instructions, that inform how a processor-oriented Tsetlin Machine accelerator could balance programmability, energy efficiency, and on-device learning capabilities.
