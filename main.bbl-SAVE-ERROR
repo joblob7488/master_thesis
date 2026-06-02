@@ -1,0 +1,231 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global/global}
+    \entry{GranmoOle-Christoffer2018TTM-}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=6e921e9c8522b040da87ee517a48cd36}{%
+           family={Granmo},
+           familyi={G\bibinitperiod},
+           given={Ole-Christoffer},
+           giveni={O\bibinithyphendelim C\bibinitperiod}}}%
+      }
+      \list{language}{1}{%
+        {eng}%
+      }
+      \strng{namehash}{6e921e9c8522b040da87ee517a48cd36}
+      \strng{fullhash}{6e921e9c8522b040da87ee517a48cd36}
+      \strng{fullhashraw}{6e921e9c8522b040da87ee517a48cd36}
+      \strng{bibnamehash}{6e921e9c8522b040da87ee517a48cd36}
+      \strng{authorbibnamehash}{6e921e9c8522b040da87ee517a48cd36}
+      \strng{authornamehash}{6e921e9c8522b040da87ee517a48cd36}
+      \strng{authorfullhash}{6e921e9c8522b040da87ee517a48cd36}
+      \strng{authorfullhashraw}{6e921e9c8522b040da87ee517a48cd36}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{Although simple individually, artificial neurons provide state-of-the-art performance when interconnected in deep networks. Arguably, the Tsetlin Automaton is an even simpler and more versatile learning mechanism, capable of solving the multi-armed bandit problem. Merely by means of a single integer as memory, it learns the optimal action in stochastic environments through increment and decrement operations. In this paper, we introduce the Tsetlin Machine, which solves complex pattern recognition problems with propositional formulas, composed by a collective of Tsetlin Automata. To eliminate the longstanding problem of vanishing signal-to-noise ratio, the Tsetlin Machine orchestrates the automata using a novel game. Further, both inputs, patterns, and outputs are expressed as bits, while recognition and learning rely on bit manipulation, simplifying computation. Our theoretical analysis establishes that the Nash equilibria of the game align with the propositional formulas that provide optimal pattern recognition accuracy. This translates to learning without local optima, only global ones. In five benchmarks, the Tsetlin Machine provides competitive accuracy compared with SVMs, Decision Trees, Random Forests, Naive Bayes Classifier, Logistic Regression, and Neural Networks. We further demonstrate how the propositional formulas facilitate interpretation. In conclusion, we believe the combinatdion of high accuracy, interpretability, and computational simplicity makes the Tsetlin Machine a promising tool for a wide range of domains.}
+      \field{title}{The Tsetlin Machine -- A Game Theoretic Bandit Driven Approach to Optimal Pattern Recognition with Propositional Logic}
+      \field{year}{2018}
+      \keyw{Computer Science - Artificial Intelligence ; Computer Science - Computer Vision and Pattern Recognition ; Computer Science - Learning}
+    \endentry
+    \entry{AndersTunheimSvein2025AA86}{article}{}{}
+      \name{author}{6}{}{%
+        {{hash=19e728d388f925301bbf3e467ad81ca2}{%
+           family={Anders\bibnamedelima Tunheim},
+           familyi={A\bibinitperiod\bibinitdelim T\bibinitperiod},
+           given={Svein},
+           giveni={S\bibinitperiod}}}%
+        {{hash=cf7d26c93216165ec1376c2f7facb0a3}{%
+           family={Zheng},
+           familyi={Z\bibinitperiod},
+           given={Yujin},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=0d115df5b0c1e6b919d191e982f75629}{%
+           family={Jiao},
+           familyi={J\bibinitperiod},
+           given={Lei},
+           giveni={L\bibinitperiod}}}%
+        {{hash=88b8d199a8e832eabb7c290e9a7b424d}{%
+           family={Shafik},
+           familyi={S\bibinitperiod},
+           given={Rishad},
+           giveni={R\bibinitperiod}}}%
+        {{hash=6c4553d37f0a06fb9bc1b24974d45d69}{%
+           family={Yakovlev},
+           familyi={Y\bibinitperiod},
+           given={Alex},
+           giveni={A\bibinitperiod}}}%
+        {{hash=060d6cc23997ce5b8da77ec52cbe4de0}{%
+           family={Granmo},
+           familyi={G\bibinitperiod},
+           given={Ole\bibnamedelima Christoffer},
+           giveni={O\bibinitperiod\bibinitdelim C\bibinitperiod}}}%
+      }
+      \list{language}{1}{%
+        {eng}%
+      }
+      \list{publisher}{1}{%
+        {IEEE}%
+      }
+      \strng{namehash}{00295a3943b24365640cfe63d294ef7b}
+      \strng{fullhash}{6410435adb8804381212c86ca67cff59}
+      \strng{fullhashraw}{6410435adb8804381212c86ca67cff59}
+      \strng{bibnamehash}{00295a3943b24365640cfe63d294ef7b}
+      \strng{authorbibnamehash}{00295a3943b24365640cfe63d294ef7b}
+      \strng{authornamehash}{00295a3943b24365640cfe63d294ef7b}
+      \strng{authorfullhash}{6410435adb8804381212c86ca67cff59}
+      \strng{authorfullhashraw}{6410435adb8804381212c86ca67cff59}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{We present an all-digital programmable machine learning accelerator chip for image classification, underpinning on the Tsetlin machine (TM) principles. The TM is an emerging machine learning algorithm founded on propositional logic, utilizing sub-pattern recognition expressions called clauses. The accelerator implements the coalesced TM version with convolution, and classifies booleanized images of <inline-formula> <tex-math notation=""LaTeX"">28\times 28</tex-math> </inline-formula> pixels with 10 categories. A configuration with 128 clauses is used in a highly parallel architecture. Fast clause evaluation is achieved by keeping all clause weights and Tsetlin automata (TA) action signals in registers. The chip is implemented in a 65 nm low-leakage CMOS technology, and occupies an active area of 2.7 mm 2 . At a clock frequency of 27.8 MHz, the accelerator achieves 60.3 k classifications per second, and consumes 8.6 nJ per classification. This demonstrates the energy-efficiency of the TM, which was the main motivation for developing this chip. The latency for classifying a single image is <inline-formula> <tex-math notation=""LaTeX"">25.4~\mu </tex-math> </inline-formula>s which includes system timing overhead. The accelerator achieves 97.42\%, 84.54\% and 82.55\% test accuracies for the datasets MNIST, Fashion-MNIST and Kuzushiji-MNIST, respectively, matching the TM software models.}
+      \field{issn}{1549-8328}
+      \field{journaltitle}{IEEE transactions on circuits and systems. I, Regular papers}
+      \field{title}{An All-Digital 8.6-nJ/Frame 65-nm Tsetlin Machine Image Classification Accelerator}
+      \field{year}{2025}
+      \field{pages}{1\bibrangedash 14}
+      \range{pages}{14}
+      \keyw{accelerator ; Accuracy ; CMOS technology ; Convolution ; Energy efficiency ; Field programmable gate arrays ; Image classification ; Machine learning ; Neural networks ; Power demand ; Training ; Tsetlin machine}
+    \endentry
+    \entry{TunheimSveinAnders2023CTMT}{article}{}{}
+      \name{author}{5}{}{%
+        {{hash=afdf86426a2e62aa173880019c7ac0cc}{%
+           family={Tunheim},
+           familyi={T\bibinitperiod},
+           given={Svein\bibnamedelima Anders},
+           giveni={S\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=0d115df5b0c1e6b919d191e982f75629}{%
+           family={Jiao},
+           familyi={J\bibinitperiod},
+           given={Lei},
+           giveni={L\bibinitperiod}}}%
+        {{hash=88b8d199a8e832eabb7c290e9a7b424d}{%
+           family={Shafik},
+           familyi={S\bibinitperiod},
+           given={Rishad},
+           giveni={R\bibinitperiod}}}%
+        {{hash=6c4553d37f0a06fb9bc1b24974d45d69}{%
+           family={Yakovlev},
+           familyi={Y\bibinitperiod},
+           given={Alex},
+           giveni={A\bibinitperiod}}}%
+        {{hash=6e921e9c8522b040da87ee517a48cd36}{%
+           family={Granmo},
+           familyi={G\bibinitperiod},
+           given={Ole-Christoffer},
+           giveni={O\bibinithyphendelim C\bibinitperiod}}}%
+      }
+      \list{language}{1}{%
+        {eng}%
+      }
+      \list{publisher}{1}{%
+        {Elsevier B.V}%
+      }
+      \strng{namehash}{094fcf9321fab27f56f0752ef8428c2d}
+      \strng{fullhash}{56886b4054741ccfce7531e86469c8f9}
+      \strng{fullhashraw}{56886b4054741ccfce7531e86469c8f9}
+      \strng{bibnamehash}{094fcf9321fab27f56f0752ef8428c2d}
+      \strng{authorbibnamehash}{094fcf9321fab27f56f0752ef8428c2d}
+      \strng{authornamehash}{094fcf9321fab27f56f0752ef8428c2d}
+      \strng{authorfullhash}{56886b4054741ccfce7531e86469c8f9}
+      \strng{authorfullhashraw}{56886b4054741ccfce7531e86469c8f9}
+      \field{extraname}{1}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{The Tsetlin Machine (TM) is a machine learning algorithm based on an ensemble of Tsetlin Automata (TAs) that learns propositional logic expressions from Boolean input features. In this paper, the design and implementation of a Field Programmable Gate Array (FPGA) accelerator based on the Convolutional Tsetlin Machine (CTM) is presented. The accelerator performs classification of two pattern classes in 4 × 4 Boolean images with a 2 × 2 convolution window. Specifically, there are two separate TMs, one per class. Each TM comprises 40 propositional logic formulas, denoted as clauses, which are conjunctions of literals. Include/exclude actions from the TAs determine which literals are included in each clause. The accelerator supports full training, including random patch selection during convolution based on parallel reservoir sampling across all clauses. The design is implemented on a Xilinx Zynq XC7Z020 FPGA platform. With an operating clock speed of 40 MHz, the accelerator achieves a classification rate of 4.4 million images per second with an energy per classification of 0.6 \mu J. The mean test accuracy is 99.9\% when trained on the 2-dimensional Noisy XOR dataset with 40\% noise in the training labels. To achieve this performance, which is on par with the original software implementation, Linear Feedback Shift Register (LFSR) random number generators of minimum 16 bits are required. The solution demonstrates the core principles of a CTM and can be scaled to operate on multi-class systems for larger images. First fully functional Convolutional Tsetlin Machine (CTM) hardware accelerator. The accelerator is self-contained and supports full training. Random patch selection, based on parallel reservoir sampling across all clauses, during training. Test accuracy matches the corresponding software implementation. Prepared for scaling to support multi-class systems and classification of larger images.}
+      \field{issn}{0141-9331}
+      \field{journaltitle}{Microprocessors and microsystems}
+      \field{title}{Convolutional Tsetlin Machine-based Training and Inference Accelerator for 2-D Pattern Classification}
+      \field{volume}{103}
+      \field{year}{2023}
+      \field{pages}{104949}
+      \range{pages}{1}
+      \keyw{Accelerator ; FPGA ; Machine learning ; Pattern classification ; Tsetlin machine}
+    \endentry
+    \entry{TunheimSveinAnders2025TMIC}{article}{}{}
+      \name{author}{5}{}{%
+        {{hash=afdf86426a2e62aa173880019c7ac0cc}{%
+           family={Tunheim},
+           familyi={T\bibinitperiod},
+           given={Svein\bibnamedelima Anders},
+           giveni={S\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=0d115df5b0c1e6b919d191e982f75629}{%
+           family={Jiao},
+           familyi={J\bibinitperiod},
+           given={Lei},
+           giveni={L\bibinitperiod}}}%
+        {{hash=88b8d199a8e832eabb7c290e9a7b424d}{%
+           family={Shafik},
+           familyi={S\bibinitperiod},
+           given={Rishad},
+           giveni={R\bibinitperiod}}}%
+        {{hash=6c4553d37f0a06fb9bc1b24974d45d69}{%
+           family={Yakovlev},
+           familyi={Y\bibinitperiod},
+           given={Alex},
+           giveni={A\bibinitperiod}}}%
+        {{hash=6e921e9c8522b040da87ee517a48cd36}{%
+           family={Granmo},
+           familyi={G\bibinitperiod},
+           given={Ole-Christoffer},
+           giveni={O\bibinithyphendelim C\bibinitperiod}}}%
+      }
+      \list{language}{1}{%
+        {eng}%
+      }
+      \list{location}{1}{%
+        {New York}%
+      }
+      \list{publisher}{1}{%
+        {IEEE}%
+      }
+      \strng{namehash}{094fcf9321fab27f56f0752ef8428c2d}
+      \strng{fullhash}{56886b4054741ccfce7531e86469c8f9}
+      \strng{fullhashraw}{56886b4054741ccfce7531e86469c8f9}
+      \strng{bibnamehash}{094fcf9321fab27f56f0752ef8428c2d}
+      \strng{authorbibnamehash}{094fcf9321fab27f56f0752ef8428c2d}
+      \strng{authornamehash}{094fcf9321fab27f56f0752ef8428c2d}
+      \strng{authorfullhash}{56886b4054741ccfce7531e86469c8f9}
+      \strng{authorfullhashraw}{56886b4054741ccfce7531e86469c8f9}
+      \field{extraname}{2}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{abstract}{The Tsetlin Machine (TM) is a novel machine learning algorithm that uses Tsetlin automata (TAs) to define propositional logic expressions (clauses) for classification. This paper describes a field-programmable gate array (FPGA) accelerator for image classification based on the Convolutional Coalesced Tsetlin Machine. The accelerator classifies booleanized images of 28 \times 28 pixels into 10 classes, and is configured with 128 clauses in a highly parallel architecture. To achieve fast clause evaluation and class prediction, the TA action signals and the clause weights per class are available from registers. Full on-device training is included, and the TAs are implemented with 34 Block RAM (BRAM) instances which operate in parallel. Each BRAM is addressed by the clause number and has a 72-bit word width that supports 8 TAs. The design is implemented in a Xilinx Zynq Ultrascale+ XCZU7 FPGA. Running at 50 MHz, the accelerator core achieves 134k image classifications per second, with an energy consumption per classification of <inline-formula> <tex-math notation=""LaTeX"">13.3~\mu </tex-math></inline-formula> J. A single training epoch of 60k samples requires a processing time of 1.5 seconds. The accelerator obtains a test accuracy of 97.6\% on MNIST, 84.1\% on Fashion-MNIST and 82.8\% on Kuzushiji-MNIST.}
+      \field{issn}{1549-8328}
+      \field{journaltitle}{IEEE transactions on circuits and systems. I, Regular papers}
+      \field{number}{2}
+      \field{title}{Tsetlin Machine-Based Image Classification FPGA Accelerator With On-Device Training}
+      \field{volume}{72}
+      \field{year}{2025}
+      \field{pages}{830\bibrangedash 843}
+      \range{pages}{14}
+      \keyw{accelerator ; Accuracy ; Algorithms ; Architecture ; Classification ; CMOS technology ; Convolution ; Energy consumption ; Energy efficiency ; Field programmable gate arrays ; FPGA ; Image classification ; Image processing systems ; Learning automata ; Machine learning ; Power demand ; Training ; Transformers ; Tsetlin machine}
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+
