@@ -36,6 +36,10 @@ __pycache__/
 *.ind
 *.pdf
 *.minted
+*.bbl-SAVE-ERROR
+*.bcf-SAVE-ERROR
+*.run.xml
+*.bcf
 
 # Build and temporary files
 *.tmp
