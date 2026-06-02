@@ -1,18 +1,128 @@
 \section{Tsetlin Machine Fundamentals}
+\label{sec:tm_fundamentals}
 
+The Tsetlin Machine (TM) is a machine learning algorithm based on propositional logic and finite-state automata, introduced by Ole-Christoffer Granmo in 2018 \textcolor{red}{CITE GRANMO}. Rather than learning continuous-valued weights as in neural networks, the TM learns patterns in the form of Boolean expressions called clauses. Each clause is a conjunctive rule over a set of binary literals, and a collection of clauses votes to determine the predicted class. This section describes the fundamental components of the TM: how input features are represented, how clauses are formed and evaluated, how Tsetlin Automata govern clause composition, how multi-class classification is performed, and how inference and learning operate. 
 
 \subsection{Features, Literals and Booleanization}
+\label{sec:tm_features_literals}
 
+In the context of machine learning, a \textit{feature} $x_i$ is measurable characteristic or property of the input data \textcolor{red}{SOURCE}. They provide a representation of the data that a learning algorithm can understand and use to learn patterns and make predictions. A collection of features is arranged into a feature vector 
+
+\begin{equation}
+    X = [x_0,\, x_1,\, \ldots,\, x_{o-1}],
+    \label{eq:feature_vector}
+\end{equation}
+
+where $o$ is the number of features. Features can be continuous-valued, integer-valued, or categorical in their raw form. The TM, however, operates on Boolean features, meaning every $x_i \in \{0, 1\}$. \textcolor{red}{gå over denne setningen igjen hehe}Data that is not already binary must be converted through a preprocessing step called \textit{booleanization} (or \textit{thresholding}) which converts each feature into binary features \textcolor{red}{CITE GRANMO}. One common strategy is to select a set of threshold values for each feature and encode whether the original value exceeds each threshold, producing one binary indicator per threshold. \textcolor{red}{denne setningen er fucked lol}
+
+\textcolor{red}{ADD A FIGURE SHOWING booleanization of a continuous feature into binary threshold indicators}
+
+To enable the TM to not only have knowledge of the existence of a feature, but its absence as well, the input is extended with the negated of each feature. This is done by appending the feature vector $X$ with the vector of negated features $\lnot X$. This resulting vector is called the \textit{literal vector}
+
+\begin{equation}
+    L = [l_0,\, l_1,\, \ldots,\, l_{2o-1}] \\
+      = [x_0,\, \ldots,\, x_{o-1},\, \lnot x_0,\, \ldots,\, \lnot x_{o-1}].
+    \label{eq:literal_vector}
+\end{equation}
+
+Each element $l_k$ is referred to as a \textit{literal}. The first $o$ literals are the \textit{positive literals} $x_i$, and the remaining $o$ are the \textit{negative literals} $\lnot x_i$. Literals form the building blocks from which clauses are composed.
 
 \subsection{Clauses and Conjunctive Rules}
+\label{sec:tm_clauses}
 
+The TM represents patterns through \textit{clauses}, each of which is a conjunction of a selected subset of literals. For clause $C_j$, let $S_j \subseteq \{l_0, \ldots, l_{2o-1}\}$ be the set of literals included in the clause. The clause output is
+\begin{equation}
+    C_j(X) = \bigwedge_{l_k \in S_j} l_k.
+    \label{eq:clause}
+\end{equation}
+
+A clause is satisfied (outputs 1) if all of its included literals are satisfied. Any literal not in $S_j$ is said to be \textit{excluded}, and therefore does not influence the output of the clause. The result is an interpretable rule, which can be read directly as a set of conditions that must be met.
+
+A special case arises when $S_j = \emptyset$, meaning no literal has been included. This means there are no conditions to satisfy, so the clause always evaluates to 1 regardless of the input. This \textit{all-exclude} case must be handled explicitly to prevent invalid votes.
+
+Clauses are divided into two groups: \textit{positive clauses} which vote in favour of a given class, and \textit{negative clauses} which vote against it. The class score is obtained by adding the sum positive clause outputs and subtracting the sum of the negative clause outputs. This voting structure lets the TM represent a class through multiple independent clauses, which can capture a wider range of patterns.
+
+\textcolor{red}{ADD A FIGURE SHOWING clause evaluation: literal vector input,
+include/exclude decisions, AND reduction to a single output bit}
 
 \subsection{Tsetlin Automata}
+\label{sec:tm_ta}
 
+The decision-making process behind whether or not a literal should be included in each clause is controlled by a Tsetlin Automaton (TA). TAs are fine-state learning automaton, first described by M.~L.~Tsetlin in 1961 \textcolor{red}{CITE TSETLIN}. Each TA maintains a state which determines its current action (include or exclude). When the TM receives a training sample, it sends a reward-signal or a penalty-signal to each relevant TA. A reward increments the state further into the region of the current action, while a penalty decrements it toward the opposite region. This simple update rule allows the automaton to converge toward whichever action is most consistently rewarded.
+
+\textcolor{red}{ADD A FIGURE SHOWING the TA state diagram with Exclude and
+Include halves, reward and penalty transitions}
+
+For a TA with parameter $N$, the $2N$ states are split in the middle, with states $1$ through $N$ corresponding to the \textit{Exclude} action ($l_k \notinS_j$), and states $N+1$ through $2N$ corresponding to the \textit{Include} action
+($l_k \in S_j$). Each TA operates independently using only its state as memory, making them compact and open to parallelization.
+
+Since inference requires only the action and not the full state, the TA values can be reduced to a single action bit per literal once training is complete. Storing only this \textit{action bit plane} can significantly reduce the memory footprint of a deployed model.
 
 \subsection{Multi-Class Classification}
+\label{sec:tm_multiclass}
 
+The binary TM can be extended to multi-class problems by training an
+independent TM for each class $c \in \{0, 1, \ldots, K-1\}$
+\textcolor{red}{CITE}. Each class is assigned $n$ clauses, divided
+evenly into $n/2$ positive clauses $C_{c,j}^+$ and $n/2$ negative clauses
+$C_{c,j}^-$. The class score $v_c$ for each class $c$ is computed as
+
+\begin{equation}
+    v_c(X) = \sum_{j=1}^{n/2} C_{c,j}^+(X) - \sum_{j=1}^{n/2} C_{c,j}^-(X).
+    \label{eq:class_score}
+\end{equation}
+
+To prevent classes from achieving unbounded scores, the scores are thresholded, controlled by a threshold parameter $T$
+
+\begin{equation}
+    \hat{v}_c(X) = \max\!\bigl(-T,\, \min\!\bigl(T,\, v_c(X)\bigr)\bigr).
+    \label{eq:clamped_score}
+\end{equation}
+
+This clamping applies during training when computing feedback probabilities. At inference time the raw scores are compared directly, so clamping is not strictly necessary for a correct prediction.
+
+\begin{equation}
+    \hat{y} = \arg\max_{c}\; v_c(X).
+    \label{eq:argmax}
+\end{equation}
+
+Each class therefore contributes independently scores, and the final prediction is the class whose clauses produce the strongest positive vote. 
+
+\textcolor{red}{ADD A FIGURE SHOWING multi-class TM structure: $K$ independent
+clause banks feeding into $K$ score accumulators and an argmax block}
 
 \subsection{Inference Algorithm}
+\label{sec:tm_inference}
+
+Given a trained model and an input sample $X$, inference is done as follows.
+First the input is booleanized and turned into the literal vector $L$ as
+described in Section \ref{sec:tm_features_literals}. Negative literals do not need to be stored explicitly, as all the features are binary and $\lnot x_i$ can by taking the bitwise complement of $x_i$.
+
+\textcolor{red}{den her må sees over på nytt, den er litt rar}
+For each class $c$ and each clause $j$, the clause output $C_{c,j}(X)$ is
+evaluated according to Equation~\eqref{eq:clause}. In practice, the
+include/exclude decisions actions for all literals of a clause can be stored as bitmasks
+over groups of literals, allowing the clause to be computed with bitwise AND operations over multiple literals simultaneously. The full clause output is the AND of all group results, subject to the all-exclude check. An early exit on the first failing group is a common optimisation that avoids evaluating the remaining groups of a clause that has already failed.
+
+Once all clause outputs are known, the class scores are accumulated
+according to Equation~\eqref{eq:class_score}, and the argmax in
+Equation~\eqref{eq:argmax} decides the predicted class.
+
+The inference computation involves no floating-point arithmetic and nomultiplications. All clause evaluation reduces to bitwise operations and integer addition, making TM inference well suited for resource-constrained hardware like FPGAs and microcontrollers \textcolor{red}{CITE ??}.
+
 
 \subsection{Learning Algorithm}
+\label{sec:tm_learning}
+
+Training the TM consists of iteratively updating the TA states based on
+stochastic feedback from the current prediction. The feedback mechanism aims to supress false negative and false positive outputs, and strengthen true positive outputs. True negative outputs are ignored in order to increase the freedom of the TAs. Two types of feedback
+are defined: \textit{Type~I Feedback} and \textit{Type~II Feedback}
+\textcolor{red}{CITE GRANMO}.
+
+\textit{Type~I Feedback} strengthens clauses that belong to the correct class. It rewards TAs that have made useful decisions for the current input, gradually refining each clause toward a specific sub-pattern present in the training data. A sensitivity hyperparameter $s \geq 1$ controls how fine-grained the resulting patterns become: larger values of $s$ push clauses to include more literals, capturing more specific sub-patterns.
+
+\textit{Type~II Feedback} is applied to clauses belonging to an incorrect class, and acts to increase the discrimination power of clauses. It targets only one specific case: when a clause evaluates to 1 on a non-matching input, the TA of each excluded literal with value 0 receives a penalty. This pushes the automaton toward including that literal, which will force the clause to evaluate to 0 on similar inputs. All other cases result in inaction, leaving those TAs unchanged.
+
+In short, Type~I Feedback aims to combat false negative outputs and boost true positive outputs, while Type~II Feedback aims to combat false positive outputs \textcolor{red}{CITE GRANMO}.
+
+Training proceeds iteratively over the dataset. In each step, a training sample $(X, y)$ is drawn, clause outputs and class scores are computed, and feedback is applied to the relevant TAs. Because only the action bit is needed for inference, the full TA state can be discarded once training is complete.
