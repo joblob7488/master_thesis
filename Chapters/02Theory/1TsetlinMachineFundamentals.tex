@@ -53,7 +53,7 @@ The decision-making process behind whether or not a literal should be included i
 \textcolor{red}{ADD A FIGURE SHOWING the TA state diagram with Exclude and
 Include halves, reward and penalty transitions}
 
-For a TA with parameter $N$, the $2N$ states are split in the middle, with states $1$ through $N$ corresponding to the \textit{Exclude} action ($l_k \notinS_j$), and states $N+1$ through $2N$ corresponding to the \textit{Include} action
+For a TA with parameter $N$, the $2N$ states are split in the middle, with states $1$ through $N$ corresponding to the \textit{Exclude} action ($l_k \notin S_j$), and states $N+1$ through $2N$ corresponding to the \textit{Include} action
 ($l_k \in S_j$). Each TA operates independently using only its state as memory, making them compact and open to parallelization.
 
 Since inference requires only the action and not the full state, the TA values can be reduced to a single action bit per literal once training is complete. Storing only this \textit{action bit plane} can significantly reduce the memory footprint of a deployed model.
