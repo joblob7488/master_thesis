@@ -1,10 +1,41 @@
+\newpage
 \section{RISC-V Instruction Set Architecture}
+\label{sec:riscv}
 
+RISC-V is a free and open instruction set architecture (ISA) developed at the University of California, Berkeley, and is currently maintained by RISC-V International \textcolor{red}{SOURCE}. Unlike proprietary ISAs like x86 and ARM, RISC-V is open-source and royalty-free, making it a popular choice in research. Its relevance in this project comes from the fact that it is well suited for extending the instruction set with user-defined custom operations.
 
 \subsection{Overview and Design Philosophy}
 
+RISC-V is a reduced instruction set computer (RISC) architecture, meaning it operates on a smaller set of simple instructions. This is in contrast to complex instruction set computer (CISC) architectures, which provide a larger set of more specialized instructions \textcolor{red}{her trengs det kilder altså}. In a RISC architecture, complex operations are composed of multiple smaller, more simple instructions.
+
+One of the core principles of RISC-V is the separation of the mandatory base ISA, and the numerous optional extensions. The base ISA provides the minimum instruction set for a processor to function, while all other functionality can be added to fit the needs of the user. \textcolor{red}{sjekk opp hvilke typiske extensions som du kan bruke som eksempler.} This modularity makes RISC-V highly scalable, suitable for implementations ranging from small microcontrollers to high-performance server processors \textcolor{red}{vet at på en RISC-V konferanse så ble dette nevnt}.
+
+Another deliberate design choice is that RISC-V was designed with custom ISA extensions in mind. The instruction encoding explicitly reserves opcode space for custom extensions, enabling users to add application specific instructions without conflicting with the current standard extensions.
 
 \subsection{Base and Standard Extensions}
+
+The base integer ISA for 32-bit RISC-V processors is called RV32I. It provides 32 general-purpose registers, integer arithmetic and logical operations, load and store instructions, and control flow instructions like branch and jump. RV32I is very minimal, with operations like multiplication and division being absent, and instead provided by the M extension.
+
+The standard extensions are identified by single letters. Some of the most commonly used extensions are shown in Table~\ref{tab:riscv_extensions}.
+
+\begin{table}[h]
+\centering
+\caption{Selected standard RISC-V ISA extensions.}
+\label{tab:riscv_extensions}
+\begin{tabular}{ll}
+\hline
+\textbf{Extension} & \textbf{Description} \\
+\hline
+M & Integer multiplication and division \\
+A & Atomic memory operations \\
+F & Single-precision floating-point \\
+D & Double-precision floating-point \\
+C & Compressed 16-bit instructions \\
+\hline
+\end{tabular}
+\end{table}
+
+The combination RV32IMAC, for example, means a 32-bit processor is implementing the base integer ISA along with the M, A, and C extensions. 
 
 
 \subsection{Custom Extensions and Application-Specific Instructions}
@@ -12,3 +43,62 @@
 
 \subsection{Instruction Encoding Formats} % R, I, S, B, U, J formats
 
+
+\begin{figure}[htbp]
+\centering
+\textbf{R-Type}
+\vspace{0.5em}
+
+% ----- R-Type -----
+\begin{bytefield}[bitwidth=1.05em]{32}
+  \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+  \bitbox{7}{opcode} &
+  \bitbox{5}{rd} &
+  \bitbox{3}{funct3} &
+  \bitbox{5}{rs1} &
+  \bitbox{5}{rs2} &
+  \bitbox{7}{funct7} 
+\end{bytefield}
+
+\vspace{1em}
+\textbf{I-Type}
+\vspace{0.5em}
+
+% ----- I-Type -----
+\begin{bytefield}[bitwidth=1.05em]{32}
+  \bitheader{31,20,19,15,14,12,11,7,6,0} \\
+  \bitbox{7}{opcode} &
+  \bitbox{5}{rd} &
+  \bitbox{3}{funct3} &
+  \bitbox{5}{rs1} &
+  \bitbox{12}{imm[11:0]}  
+\end{bytefield}
+
+\vspace{1em}
+\textbf{S-Type}
+\vspace{0.5em}
+
+\begin{bytefield}[bitwidth=1.05em]{32}
+  \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+  \bitbox{7}{opcode} &
+  \bitbox{5}{imm[4:0]} &
+  \bitbox{3}{funct3} &
+  \bitbox{5}{rs1} &
+  \bitbox{5}{rs2} &
+  \bitbox{7}{imm[11:5]} 
+\end{bytefield}
+
+\vspace{1em}
+\textbf{U-Type}
+\vspace{0.5em}
+
+\begin{bytefield}[bitwidth=1.05em]{32}
+  \bitheader{31,12,11,7,6,0} \\
+  \bitbox{7}{opcode} &
+  \bitbox{5}{rd} &
+  \bitbox{20}{imm[19:0]}  
+\end{bytefield}
+
+\caption{RISC-V instruction formats (examples).}
+\label{fig:insttypes}
+\end{figure}
