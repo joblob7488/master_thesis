@@ -5,20 +5,20 @@
 RISC-V is a free and open instruction set architecture (ISA) developed at the University of California, Berkeley, and is currently maintained by RISC-V International \textcolor{red}{SOURCE}. Unlike proprietary ISAs like x86 and ARM, RISC-V is open-source and royalty-free, making it a popular choice in research. Its relevance in this project comes from the fact that it is well suited for extending the instruction set with user-defined custom operations.
 
 \subsection{Overview and Design Philosophy}
-
-RISC-V is a reduced instruction set computer (RISC) architecture, meaning it operates on a smaller set of simple instructions. This is in contrast to complex instruction set computer (CISC) architectures, which provide a larger set of more specialized instructions \textcolor{red}{her trengs det kilder altså}. In a RISC architecture, complex operations are composed of multiple smaller, more simple instructions.
+\label{sec:riscv_overview}
+RISC-V is a reduced instruction set computer (RISC) architecture, meaning it operates on a smaller set of simple instructions. This is in contrast to complex instruction set computer (CISC) architectures, which provide a larger set of more specialized instructions \textcolor{red}{her trengs det kilder altså}. In a RISC architecture, complex operations are instead composed of multiple smaller, more simple instructions.
 
 One of the core principles of RISC-V is the separation of the mandatory base ISA, and the numerous optional extensions. The base ISA provides the minimum instruction set for a processor to function, while all other functionality can be added to fit the needs of the user. \textcolor{red}{sjekk opp hvilke typiske extensions som du kan bruke som eksempler.} This modularity makes RISC-V highly scalable, suitable for implementations ranging from small microcontrollers to high-performance server processors \textcolor{red}{vet at på en RISC-V konferanse så ble dette nevnt}.
 
 Another deliberate design choice is that RISC-V was designed with custom ISA extensions in mind. The instruction encoding explicitly reserves opcode space for custom extensions, enabling users to add application specific instructions without conflicting with the current standard extensions.
 
 \subsection{Base and Standard Extensions}
-
-The base integer ISA for 32-bit RISC-V processors is called RV32I. It provides 32 general-purpose registers, integer arithmetic and logical operations, load and store instructions, and control flow instructions like branch and jump. RV32I is very minimal, with operations like multiplication and division being absent, and instead provided by the M extension.
+\label{sec:riscv_extensions}
+The base integer ISA for 32-bit RISC-V processors is called RV32I. It provides 32 general-purpose registers, integer arithmetic and logical operations, load and store instructions, and control flow instructions like branch and jump. RV32I is very minimal, with operations like multiplication and division being absent, and instead provided by the M extension. 
 
 The standard extensions are identified by single letters. Some of the most commonly used extensions are shown in Table~\ref{tab:riscv_extensions}.
 
-\begin{table}[h]
+\begin{table}[H]
 \centering
 \caption{Selected standard RISC-V ISA extensions.}
 \label{tab:riscv_extensions}
@@ -39,12 +39,26 @@ The combination RV32IMAC, for example, means a 32-bit processor is implementing 
 
 
 \subsection{Custom Extensions and Application-Specific Instructions}
+\label{sec:riscv_custom}
 
+\textcolor{red}{is there too much repetition here now?}
+As mentioned earlier in Section~\ref{sec:riscv_overview}, the RISC-V ISA reserves opcode space for custom instructions and custom extensions (sets of instructions). Custom instruction are useful for accelerating computationally intensive operations which appear often in specific workloads. For example, by encoding a multi-step operation as a single instruction, the processor can perform the equivalent computation in fewer cycles than a software implementation using the standard ISA, and the operation can be offloaded to a dedicated hardware unit. This makes custom instructions particularly relevant in domains such as machine learning, cryptography, and digital signal processing. Typical use cases include:
+
+\begin{itemize}
+    \item Accelerating computationally heavy loops
+    \item Providing efficient access to specialized HW units
+    \item Reducing instruction count by combining operations
+    \item Supporting algorithm-specific functionality
+\end{itemize}
+
+From a software point of view, custom instruction are typically invoked either through inline assembly, or by using macros. The instructions are encoded manually into a 32-bit word by using the appropriate opcode and other operand values. This allows custom instructions to be called directly from a C program, without the user needing to modify the compiler.
 
 \subsection{Instruction Encoding Formats} % R, I, S, B, U, J formats
+\label{sec:riscv_encoding}
 
+In the standard 32-bit RISC-V ISA, all instructions are fixed-width 32-bit words. These instructions have defined fields for opcode, register operands, immediate values and function identifiers. While there are numerous different encoding formats, the four core formats provided by RV32 I are shown in Figure~\ref{fig:insttypes}. 
 
-\begin{figure}[htbp]
+\begin{figure}[H]
 \centering
 \textbf{R-Type}
 \vspace{0.5em}
@@ -102,3 +116,12 @@ The combination RV32IMAC, for example, means a 32-bit processor is implementing 
 \caption{RISC-V instruction formats (examples).}
 \label{fig:insttypes}
 \end{figure}
+
+While all of the different instruction formats are used in various extensions and contexts, we will be focusing on the R-type format, as it is most relevant for this work. From Figure \ref{fig:insttypes} we can see that R-type instructions take in:
+
+\begin{itemize}
+    \item \textit{funct7} and \textit{funct3}, which are function identifiers, used to specify functionality,
+    \item \textit{rs2} and \textit{rs1} are source registers, specifying which register to take values from,
+    \item \textit{rd} is the destination register, in which the output/result of the instruction will lie,
+    \item \textit{opcode} which identifies what instruction group the instruction belongs to (BRANCH, LOAD, STORE, etc.)of length.
+\end{itemize}
