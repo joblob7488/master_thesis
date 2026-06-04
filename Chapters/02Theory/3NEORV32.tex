@@ -1,14 +1,32 @@
+\newpage
 \section{NEORV32 Processor}
+\label{sec:neorv32}
 
+NEORV32 is an open-source microcontroller-class system-on-chip (SoC), built around a 32-bit RISC-V soft-core CPU. It is created by Stephan Nolting, and is written in platform-independent VHDL. It is designed to be synthesised on FPGAs, and is configurable through VHDL generics, meaning the user can select which ISA extensions the core is running, specify memory size, and which peripherals are to be implemented. It target both beginner FPGA developers and more experienced user, and is designed to work out of the box, while remaining fully documented and open-source. The processor is intended either as a stand-alone, custom MCU, or as an auxiliary controller within a larger SoC design, and its modular structure makes it straightforward to extend with custom hardware. 
 
 \subsection{Architectural Overview}
+\label{sec:neorv32_arch}
 
+In its baseline configuration, the NEORV32 CPU uses the {RV32IZicsr\_Zifencei ISA}. This means that it includes the base integer ISA extension, and the Zicsr and Zifencei ISA extensions, which include instructions for control and status register access, and instruction-fetch fence \textcolor{red}{cite både risc-v isa og neorv32 datasheet her}. Additionally, it also implements the X ISA extension, which is a NOERV32-specific extension which provides fast interrupts, NOERV32 specific control status registers, and makes it so undefined or illegal instructions raise exceptions during run-time.
+
+\textcolor{red}{ADD A FIGURE SHOWING the NEORV32 SoC block diagram with CPU,
+IMEM, DMEM, CFU, CFS, DMA, and XBUS interconnect}
+
+The processor wraps the CPU core with a set of optional peripherals and memories, which are all connected through a processor-internal bus. Internal instruction memory (IMEM) and data memory (DMEM) can be mapped to block RAM on FPGAs, with their size being customizable. For applications that require more memory than the target FPGA can provide, the processor also provides an external bus (XBUS) interface which connects to off-chip peripherals and memories. The XBUS is described further in Section~\ref{sec:neorv32_xbus}.
+
+The NEORV32 provides two main methods for adding customized, processor internal hardware. These differ in how closely connected they are to the CPU pipeline and how they are accessed from software. These methods are the Custom Functions Unit (CFU), and the Custom Functions Subsystem (CFS). 
 
 \subsection{Custom Functions Unit (CFU)} % Instruction formats R and I, R3 and R4 for the older version
+\label{sec:neorv32_cfu}
+
 
 
 \subsection{Custom Functions Subsystem (CFS) and DMA}
+\label{sec:neorv32_cfs}
+
 
 
 \subsection{XBUS / Wishbone External Bus Interface}
+\label{sec:neorv32_xbus}
+
 
