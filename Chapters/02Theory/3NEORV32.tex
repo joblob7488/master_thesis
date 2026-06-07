@@ -7,7 +7,7 @@ NEORV32 is an open-source microcontroller-class system-on-chip (SoC), built arou
 \subsection{Architectural Overview}
 \label{sec:neorv32_arch}
 
-In its baseline configuration, the NEORV32 CPU uses the {RV32IZicsr\_Zifencei ISA}. This means that it includes the base integer ISA extension, and the Zicsr and Zifencei ISA extensions, which include instructions for control and status register access, and instruction-fetch fence \textcolor{red}{cite både risc-v isa og neorv32 datasheet her}. Additionally, it also implements the X ISA extension, which is a NOERV32-specific extension which provides fast interrupts, NOERV32 specific control status registers, and makes it so undefined or illegal instructions raise exceptions during run-time.
+In its baseline configuration, the NEORV32 CPU uses the {RV32IZicsr\_Zifencei ISA}. This means that it includes the base integer ISA extension, and the Zicsr and Zifencei ISA extensions, which include instructions for control and status register access, and instruction-fetch fence \textcolor{red}{cite både risc-v isa og neorv32 datasheet her}. Additionally, it also implements the X ISA extension, which is a NEORV32-specific extension which provides fast interrupts, NEORV32 specific control status registers, and makes it so undefined or illegal instructions raise exceptions during run-time.
 
 \textcolor{red}{ADD A FIGURE SHOWING the NEORV32 SoC block diagram with CPU,
 IMEM, DMEM, CFU, CFS, DMA, and XBUS interconnect}
@@ -19,14 +19,72 @@ The NEORV32 provides two main methods for adding customized, processor internal 
 \subsection{Custom Functions Unit (CFU)} % Instruction formats R and I, R3 and R4 for the older version
 \label{sec:neorv32_cfu}
 
+The Custom Functions Unit (CFU) is an ISA extension which is specific to the NEORV32. It is a functional unit that is integrated directly into the CPU-pipeline \textcolor{red}{CITE NEORV32}. The CFU has directs access to the CPU register file, which lets custom instructions operate with low latency, with a minimum of only three clock cycles. This makes the CFU well suited for small, computationally intensive operations.
 
+The modern versions of the NEORV32 CFU implement the standard RISC-V R-type and I-type instruction encoding formats, shown in Figure~\ref{fig:insttypes}. Earlier versions, however, implemented the NEORV32-specific R3- and R4-type instruction formats, shown in Figure~\ref{fig:neorv32_insttypes}. The R3-type format is the same as the standard R-type format, however the R4-type format swaps out the \textit{funct7} functional identifier with an additional source register \textit{rs3}.
 
-\subsection{Custom Functions Subsystem (CFS) and DMA}
+\begin{figure}[H]
+\centering
+\textbf{R3-Type}
+\vspace{0.5em}
+
+% ----- R-Type -----
+\begin{bytefield}[bitwidth=1.05em]{32}
+  \bitheader{31,25,24,20,19,15,14,12,11,7,6,0} \\
+  \bitbox{7}{opcode} &
+  \bitbox{5}{rd} &
+  \bitbox{3}{funct3} &
+  \bitbox{5}{rs1} &
+  \bitbox{5}{rs2} &
+  \bitbox{7}{funct7} 
+\end{bytefield}
+
+\vspace{1em}
+\textbf{R4-Type}
+\vspace{0.5em}
+
+\begin{bytefield}[bitwidth=1.05em]{32}
+  \bitheader{31,27,26,25,24,20,19,15,14,12,11,7,6,0} \\
+  \bitbox{7}{opcode} &
+  \bitbox{5}{rd} &
+  \bitbox{3}{funct3} &
+  \bitbox{5}{rs1} &
+  \bitbox{5}{rs2} &
+  \bitbox{2}{} &
+  \bitbox{5}{rs3}
+\end{bytefield}
+
+\caption{Previous CFU instruction formats.}
+\label{fig:neorv32_insttypes}
+\end{figure}
+
+The CFU can be implemented as either a purely combinational or a sequential circuit. A combinational CFU asserts its result in the same cycle the instruction is issued, meaning the minimum latency of three clock cycles is used. A sequential design takes one or more additional cycles, stalling the CPU until the result is ready. CFU instructions are invoked in software by using provided C intrinsics, which encode the instruction fields into inline assembly and lets them be used as ordinary C function calls.
+
+\subsection{Custom Functions Subsystem (CFS)}
 \label{sec:neorv32_cfs}
 
+The Custom Functions Subsystem (CFS) is a processor-internal module meant for implementation of larger custom hardware modules. Unlike the CFU, the CFS is a memory-mapped peripheral which can be accessed through load and store instructions. The logic implemented inside the CFS can operate independently of the CPU, which enables true parallel processing. This makes it suitable for accelerators which require more complexity than what a few custom instructions can provide.
 
-
-\subsection{XBUS / Wishbone External Bus Interface}
+\subsection{External Bus Interface}
 \label{sec:neorv32_xbus}
 
+For designs that require larger, processor-external accelerators, the NEORV32 provides the External Bus Interface (XBUS). The XBUS is an on-chip bus interface, which is used to attach modules outside of the processor. Whenever the CPU tries to access an address which falls outside of the processor's internal address space, the address is instead forwarded to the XBUS. This makes it possible to attach additional memories, external IP and peripheral devices, or custom hardware accelerators.
 
+The XBUS is compatible with the Wishbone bus protocol by default. Additionally, the NEORV32 provides an interface bridge which makes the XBUS interface AXI4 compatible. \textcolor{red}{HER TRENGS DET SOURCES ELLER MER TEKST KANSKJE}
+
+The main differences between the three mechanisms for adding custom hardware are summarised below in Table~\ref{tab:neorv_modules}.
+
+\begin{table}[H]
+\centering
+\caption{\textcolor{red}{CITE USER GUIDE}.}
+\label{tab:neorv_modules}
+\begin{tabular}{l|lll}
+                           & CFU & CFS & XBUS \\ \hline
+RTL Location               & CPU-internal                & Processor-internal               & Processor-external     \\
+HW complexity/size         & Small                       & Medium                           & Large                  \\
+CPU-independent  & No                          & Yes                              & Yes                    \\
+CPU interface              & Register file access        & Memory-mapped                    & Memory-mapped          \\
+Access mechanism & Custom Instructions         & Load/store                       & Load/store             \\
+Access latency             & Low                         & Medium                           & Medium to High         \\          
+\end{tabular}
+\end{table}
