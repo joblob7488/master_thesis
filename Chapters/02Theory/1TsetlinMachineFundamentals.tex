@@ -15,6 +15,13 @@ In the context of machine learning, a \textit{feature} $x_i$ is measurable chara
 
 where $o$ is the number of features. Features can be continuous-valued, integer-valued, or categorical in their raw form. The TM, however, operates on Boolean features, meaning every $x_i \in \{0, 1\}$. \textcolor{red}{gå over denne setningen igjen hehe}Data that is not already binary must be converted through a preprocessing step called \textit{booleanization} (or \textit{thresholding}) which converts each feature into binary features \textcolor{red}{CITE GRANMO}. One common strategy is to select a set of threshold values for each feature and encode whether the original value exceeds each threshold, producing one binary indicator per threshold. \textcolor{red}{denne setningen er fucked lol}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width =0.8\textwidth]{Figures/thresholding.png}
+    \caption{Simple example of boolenization by using thresholding.}
+    \label{fig:thresh}
+\end{figure}
+
 \textcolor{red}{ADD A FIGURE SHOWING booleanization of a continuous feature into binary threshold indicators}
 
 To enable the TM to not only have knowledge of the existence of a feature, but its absence as well, the input is extended with the negated of each feature. This is done by appending the feature vector $X$ with the vector of negated features $\lnot X$. This resulting vector is called the \textit{literal vector}
@@ -30,7 +37,8 @@ Each element $l_k$ is referred to as a \textit{literal}. The first $o$ literals 
 \subsection{Clauses and Conjunctive Rules}
 \label{sec:tm_clauses}
 
-The TM represents patterns through \textit{clauses}, each of which is a conjunction of a selected subset of literals. For clause $C_j$, let $S_j \subseteq \{l_0, \ldots, l_{2o-1}\}$ be the set of literals included in the clause. The clause output is
+The TM represents patterns through \textit{clauses}, each of which is a conjunction of a selected subset of literals. For clause $C_j$, let $S_j \subseteq \{l_0, \ldots, l_{2o-1}\}$ be the set of literals included in the clause. The clause output is 
+
 \begin{equation}
     C_j(X) = \bigwedge_{l_k \in S_j} l_k.
     \label{eq:clause}
@@ -38,7 +46,14 @@ The TM represents patterns through \textit{clauses}, each of which is a conjunct
 
 A clause is satisfied (outputs 1) if all of its included literals are satisfied. Any literal not in $S_j$ is said to be \textit{excluded}, and therefore does not influence the output of the clause. The result is an interpretable rule, which can be read directly as a set of conditions that must be met.
 
-A special case arises when $S_j = \emptyset$, meaning no literal has been included. This means there are no conditions to satisfy, so the clause always evaluates to 1 regardless of the input. This \textit{all-exclude} case must be handled explicitly to prevent invalid votes.
+A special case arises when $S_j = \emptyset$, meaning no literal has been included. This means there are no conditions to satisfy, so the clause always evaluates to 1 regardless of the input. This \textit{all-exclude} case must be handled explicitly to prevent invalid votes, as shown in Figure \ref{fig:clause_out}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width =0.9\textwidth]{Figures/clause_out.png}
+    \caption{Block diagram of clause output $C_j$ evaluation, with include/exclude signals for each literal, which handles the \textit{all-exclude} case.}
+    \label{fig:clause_out}
+\end{figure}
 
 Clauses are divided into two groups: \textit{positive clauses} which vote in favour of a given class, and \textit{negative clauses} which vote against it. The class score is obtained by adding the sum positive clause outputs and subtracting the sum of the negative clause outputs. This voting structure lets the TM represent a class through multiple independent clauses, which can capture a wider range of patterns.
 
@@ -48,7 +63,14 @@ include/exclude decisions, AND reduction to a single output bit}
 \subsection{Tsetlin Automata}
 \label{sec:tm_ta}
 
-The decision-making process behind whether or not a literal should be included in each clause is controlled by a Tsetlin Automaton (TA). TAs are fine-state learning automaton, first described by M.~L.~Tsetlin in 1961 \textcolor{red}{CITE TSETLIN}. Each TA maintains a state which determines its current action (include or exclude). When the TM receives a training sample, it sends a reward-signal or a penalty-signal to each relevant TA. A reward increments the state further into the region of the current action, while a penalty decrements it toward the opposite region. This simple update rule allows the automaton to converge toward whichever action is most consistently rewarded.
+The decision-making process behind whether or not a literal should be included in each clause is controlled by a Tsetlin Automaton (TA). TAs are fine-state learning automaton, first described by M.~L.~Tsetlin in 1961 \textcolor{red}{CITE TSETLIN}. Each TA maintains a state which determines its current action (include or exclude). When the TM receives a training sample, it sends a reward-signal or a penalty-signal to each relevant TA. A reward increments the state further into the region of the current action, while a penalty decrements it toward the opposite region. This simple update rule allows the automaton to converge toward whichever action is most consistently rewarded. This behavior is visualized in Figure 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width =1.1 \textwidth]{Figures/TsetlinAutomata.png}
+    \caption{State diagram of a Tsetlin Automaton.}
+    \label{fig:tsetlinautomata}
+\end{figure}
 
 \textcolor{red}{ADD A FIGURE SHOWING the TA state diagram with Exclude and
 Include halves, reward and penalty transitions}
@@ -63,7 +85,16 @@ Since inference requires only the action and not the full state, the TA values c
 
 The binary TM can be extended to multi-class problems by training an
 independent TM for each class $c \in \{0, 1, \ldots, K-1\}$
-\textcolor{red}{CITE}. Each class is assigned $n$ clauses, divided
+\textcolor{red}{CITE}, as shown in Figure \ref{fig:multiclass_tm}. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width =0.6\textwidth]{Figures/mctm_blokk.png}
+    \caption{Block diagram showing two Tsetlin Machines in a multi-class configuration.}
+    \label{fig:multiclass_tm}
+\end{figure}
+
+Each class is assigned $n$ clauses, divided
 evenly into $n/2$ positive clauses $C_{c,j}^+$ and $n/2$ negative clauses
 $C_{c,j}^-$. The class score $v_c$ for each class $c$ is computed as
 
@@ -87,6 +118,8 @@ This clamping applies during training when computing feedback probabilities. At 
 \end{equation}
 
 Each class therefore contributes independently scores, and the final prediction is the class whose clauses produce the strongest positive vote. 
+
+
 
 \textcolor{red}{ADD A FIGURE SHOWING multi-class TM structure: $K$ independent
 clause banks feeding into $K$ score accumulators and an argmax block}
