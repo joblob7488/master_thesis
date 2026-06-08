@@ -1,11 +1,58 @@
 \section{Benchmark Datasets}
+\label{sec:datasets}
+
+This section describes common datasets used for benchmarking various ML models. MNIST is the primary focus as it is the one implemented in this work, while the remaining datasets are included as they are used in the relevant work described later. \textcolor{red}{finn ut om related work kommer til å ende opp før eller etter denne seksjonen}
 
 \subsection{MNIST}
+\label{sec:mnist}
+
+The Modified National Institute of Standards and Technology (MNIST) dataset is a commonly used benchmark for image classification. It contains 70000 greyscale images of handwritten digits from 0 to 9 \textcolor{red}{cite}. The dataset is split into 60000 training images and 10000 test images. Each image is $28 \times 28$ pixels large. 
+
+When used with a TM, each pixel is booleanized by thresholding, meaning pixel values above a certain threshold will be set to 1, and all others are set to 0. This results in a 784-bit long feature vector $X$ per sample, or in other words a 1568-bit long literal vector $L$, as described in Section~\ref{sec:tm_features_literals}.
+
+\textcolor{red}{ADD A FIGURE SHOWING example MNIST digit images from each
+of the 10 classes}
+
+MNIST is well established as a standard benchmark, with results from a wide range of algorithms available for comparison. It is used in this work primarily to evaluate TM inference performance at scale.
+
 
 \subsection{Other Datasets}
+\label{sec:other_datasets}
 
-\subsubsection{NoisyXOR}
+The follwing 
 
-\subsubsection{Fashion-MNIST}
+\subsubsection*{NoisyXOR}
+\textcolor{red}{inspirert av prosjektoppgaven}
 
-\subsubsection{Kuzushiji-MNIST}
+The Noisy XOR dataset is a synthetic classification dataset based on the XOR logical function. It consists of 12 binary features $x_i$, with the first two features $x_0$ and $x_1$ capturing the XOR-relation ($x_0 \oplus x_1$), and the remaining features being random and non-informative \textcolor{red}{cite samme som i prsjopg}. In addition to the randomized features, $40\%$ of outputs are inverted to introduce noise. An example of the the input vector can look is shown in Table~\ref{tab:noisyxor_examples}
+
+\begin{table}[htbp]
+\centering
+\caption{Example samples from the Noisy XOR dataset. Notice the flipped/wrong outputs in line 3 and 4.}
+\label{tab:noisyxor_examples}
+\begin{tabular}{cc|ccc|c}
+\hline
+$x_0$ & $x_1$ & $x_2$ & ... & $x_{11}$ & Output \\ \hline
+0 & 0 & 1 & ... & 0 & 0 \\
+0 & 1 & 0 & ... & 1 & 1 \\
+1 & 0 & 1 & ... & 0 & 0 \\
+1 & 1 & 0 & ... & 1 & 1
+\end{tabular}
+\end{table}
+
+
+\subsubsection*{Fashion-MNIST}
+
+\textcolor{red}{SOURCE}
+Fashion-MNIST is a dataset containing greyscale images of items from 10 categories of fashion items, taken from Zalando articles. Similar to the original MNIST dataset, the images $28 \times 28$ pixels large, and it contains the same amount of training and test images. It is meant to be a more challenging replacement for MNIST. Examples of the images found in Fashion-MNIST are shown below.
+
+\textcolor{red}{ADD A FIGURE SHOWING example Fashion-MNIST images from
+each of the 10 classes}
+
+\subsubsection*{Kuzushiji-MNIST}
+
+\textcolor{red}{SOURCE}
+Kuzushiji-MNIST (KMNIST) follows the same standard as the original MNIST and Fashion-MNIST, with the same image size and image amount, with the images representing classical Japanese characters. Like Fashion-MNIST, it is a more challenging dataset than MNIST, with examples shown below.
+
+\textcolor{red}{ADD A FIGURE SHOWING example KMNIST images from each of
+the 10 classes}
