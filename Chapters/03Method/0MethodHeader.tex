@@ -1,4 +1,17 @@
 % -------------------------------------
+%   Introductory section
+% -------------------------------------
+
+This chapter will describe the methodology used to implement and evaluate different solutions for hardware acceleration of Tsetlin Machine inference on a NEORV32 RISC-V processor. The system is deployed on a Nexys A7 board, which contains an Artix-7 100T FPGA from Xilinx. The target workload is multi-class classification on the MNIST dataset.
+
+Three inference implementations are developed and evaluated: a baseline software 
+implementation performing clause evaluation using standard RISC-V instructions, 
+and two CFU-accelerated implementations differing in how clause state is managed 
+across custom instructions. All three implementations use the same trained model 
+and execute on the same hardware platform to enable a direct performance 
+comparison.
+
+% -------------------------------------
 %   System Architecture Overview
 % -------------------------------------
 \input{Chapters/03Method/1SysOverview.tex}
