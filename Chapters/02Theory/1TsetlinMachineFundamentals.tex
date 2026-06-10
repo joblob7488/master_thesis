@@ -129,7 +129,7 @@ clause banks feeding into $K$ score accumulators and an argmax block}
 
 Given a trained model and an input sample $X$, inference is done as follows.
 First the input is booleanized and turned into the literal vector $L$ as
-described in Section \ref{sec:tm_features_literals}. Negative literals do not need to be stored explicitly, as all the features are binary and $\lnot x_i$ can by taking the bitwise complement of $x_i$.
+described in Section \ref{sec:tm_features_literals}. Negative literals do not need to be stored explicitly, as all the features are binary and $\lnot x_i$ can be obtained by taking the bitwise complement of $x_i$.
 
 \textcolor{red}{den her må sees over på nytt, den er litt rar}
 For each class $c$ and each clause $j$, the clause output $C_{c,j}(X)$ is
