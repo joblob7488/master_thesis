@@ -1,7 +1,14 @@
 \section{Inference Pipeline}
 \label{sec:inference_pipeline}
 
-This section describes how inference is performed once the model has been loaded into DDR2. Two strategies for accessing the model during clause evaluation were developed and evaluated: a per-chunk strategy that reads model data directly from DDR2 during evaluation, and a per-class strategy that preloads an entire class into DMEM before evaluation. Both strategies are described below, along with a description of how the input is encoded and the output returned.
+This section describes how inference is performed once the model has been loaded into DDR2. Two strategies for accessing the model during clause evaluation were developed and evaluated: a per-chunk strategy that reads model data directly from DDR2 during evaluation, and a per-class strategy that preloads an entire class into DMEM before evaluation, with a simple visual comparison shown in Figure \ref{fig:load_strategy_comparison}. Both strategies are described below, along with a description of how the input is encoded and the output returned.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{Figures/load_strategy_comparison2.png}
+    \caption{Comparison of the per-chunk and per-class load strategies.}
+    \label{fig:load_strategy_comparison}
+\end{figure}
 
 \subsection{Input Encoding and Preprocessing}
 \label{sec:input_encoding}
@@ -85,6 +92,8 @@ for (int j = 0; j < CLAUSES; j++) {
 One class consists of $2000 \times 50 = 100\,000$ words, or 400 KB. Storing a full class in DMEM therefore requires the DMEM to be expanded beyond the default size of 8 KB. The DMEM was expanded to 512 KB to accommodate the class buffer together with the program's other data. This expansion triggers a Vivado design rule error (REQP-1962) which hindered the design from being implemented. However by manually ignoring this design rule in the constraint file of the project the design was implemented and uploaded to the FPGA, and no functionality was seemingly affected. \textcolor{red}{SOURCE NEEDED}
 
 The motivation for this strategy is to avoid the many small, slower DDR2 reads performed by the per-chunk strategy, hopefully bettering overall performance. Instead of reading individual mask words from DDR2 throughout evaluation, the per-class strategy moves all of the data for a class in one larger transfer, after which evaluation runs entirely from fast on-chip memory.
+
+
 
 \subsection{Output and Response Format}
 \label{sec:output_format}
