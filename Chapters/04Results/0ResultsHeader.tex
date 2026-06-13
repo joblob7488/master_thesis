@@ -167,3 +167,25 @@ From Table \ref{tab:res_processor} we can see that the addition of custom instru
 Increasing the DMEM size to 512 KB on the other hand has a larger effect on logic than the addition of custom instructions has. For the baseline implementation, increasing the DMEM size from 8 KB to 512 KB raises the amount of LUTs from 1885 to 2058, which is an increase of 173, which exceeds the amount added by the introduction of the CFU.  This is due to the fact that the 512 KB DMEM is too large to be held entirely in block RAM, so part of it is implemented as LUTs.
 
 The DDR2 memory subsystem takes up the majority of the logic usage of the complete design, totaling 5726 LUTs, which is more than twice the amount of LUTs of the processor, no matter the configuration. The complete design, with both the processor and the memory subsystem, uses around 12\% of the LUTs and 6\% of the flips-flops available on the Artix-7 100T, depending on the processor configuration. Block RAM, on the other hand, is fully consumed in the configurations needing 512KB DMEM. No DSP slices are used in any configuration, as clause evaluation relies only on bitwise and integer operations, as described in Section~\ref{sec:tm_inference}. In other words, block RAM is the limiting factor, which is why the model needs to reside off-chip in DDR2 and Flash memory. 
+
+\textcolor{red}{dobbeltsjekk at du gidder å ha med denne, kan bli overflødig}
+
+The total resource utilization for the complete system in every configuration is shown in Table \ref{tab:res_total}
+
+\begin{table}[H]
+\centering
+\caption{Total resource utilization of the complete system (processor plus DDR2
+subsystem) for each configuration..}
+\label{tab:res_total}
+\begin{tabular}{|l|r|r|r|}
+\hline
+Configuration & LUTs & FFs & BRAM \\ \hline
+Baseline, 8 KB DMEM       & 7615 & 7911 & 8     \\ \hline
+Baseline, 512 KB DMEM     & 7784 & 7923 & 134.5 \\ \hline
+CFU Design 1, 8 KB DMEM   & \textcolor{red}{xxx} & \textcolor{red}{xxx} & \textcolor{red}{xxx} \\ \hline
+CFU Design 1, 512 KB DMEM & \textcolor{red}{xxx} & \textcolor{red}{xxx} & \textcolor{red}{xxx} \\ \hline
+CFU Design 2, 8 KB DMEM   & 7667 & 7934 & 8.5 \\ \hline
+CFU Design 2, 512 KB DMEM & 7872 & 7945 & 134.5 \\ \hline
+Available                 & 63400 & 126800 & 135  \\ \hline
+\end{tabular}
+\end{table}
