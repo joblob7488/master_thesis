@@ -7,7 +7,7 @@
 To store the trained TM model in the on-board Flash memory, a dedicated flash writer program is ran on the NEORV32. The program is set to receive model data over UART, transfer the model data to Flash over SPI, before requesting more data until the model has been sent. The SPI peripheral is configured at Mode 0 with a prescaler of 8 and clock divider of 0, setting the SPI clock frequency $f_{SPI}$ to 
 
 \begin{equation}
-    f_{SPI} = \frac{f_{clk}}{2 * \textrm{prescaler} * (1 + clock_divider)} = \frac{100\text{ MHz}}{2 * 8 * 1} \approx 6.25 \text{MHz}.
+    f_{SPI} = \frac{f_{clk}}{2 * \textrm{prescaler} * (1 + \textrm{clock\_divider})} = \frac{100\text{ MHz}}{2 * 8 * 1} \approx 6.25 \text{MHz}.
 \label{eq:spi_freq}
 \end{equation}
 
