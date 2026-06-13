@@ -1,0 +1,82 @@
+\begin{table}[H]
+\centering
+\caption{Resource utilization of the NEORV32 processor across the three
+implementations at both DMEM sizes. Available resources on the Artix-7 100T are
+63\,400 LUTs, 126\,800 flip-flops, 135 block RAM tiles.
+\textcolor{red}{CITE ARTIX7 DATASHEET}.}
+\label{tab:res_processor}
+
+\begin{minipage}{0.48\textwidth}\centering
+\begin{tabular}{|l|r|r|}
+\hline
+\multicolumn{3}{|c|}{\textbf{Baseline, 8 KB DMEM}} \\ \hline
+Resource & Used & Util. (\%) \\ \hline
+LUTs & 1885 & 2.97 \\ \hline
+FFs  & 1496 & 1.18 \\ \hline
+BRAM & 8    & 5.93 \\ \hline
+
+\end{tabular}
+\end{minipage}\hfill
+\begin{minipage}{0.48\textwidth}\centering
+\begin{tabular}{|l|r|r|}
+\hline
+\multicolumn{3}{|c|}{\textbf{Baseline, 512 KB DMEM}} \\ \hline
+Resource & Used & Util. (\%) \\ \hline
+LUTs & 2058  & 3.25 \\ \hline
+FFs  & 1508  & 1.19 \\ \hline
+BRAM & 134.5 & 99.63 \\ \hline
+
+\end{tabular}
+\end{minipage}
+
+\vspace{15pt}
+
+\begin{minipage}{0.48\textwidth}\centering
+\begin{tabular}{|l|r|r|}
+\hline
+\multicolumn{3}{|c|}{\textbf{CFU Design 1, 8 KB DMEM}} \\ \hline
+Resource & Used & Util. (\%) \\ \hline
+LUTs & \textcolor{red}{xxx} & \textcolor{red}{xxx} \\ \hline
+FFs  & \textcolor{red}{xxx} & \textcolor{red}{xxx} \\ \hline
+BRAM & \textcolor{red}{xxx} & \textcolor{red}{xxx} \\ \hline
+
+\end{tabular}
+\end{minipage}\hfill
+\begin{minipage}{0.48\textwidth}\centering
+\begin{tabular}{|l|r|r|}
+\hline
+\multicolumn{3}{|c|}{\textbf{CFU Design 1, 512 KB DMEM}} \\ \hline
+Resource & Used & Util. (\%) \\ \hline
+LUTs & \textcolor{red}{xxx} & \textcolor{red}{xxx} \\ \hline
+FFs  & \textcolor{red}{xxx} & \textcolor{red}{xxx} \\ \hline
+BRAM & \textcolor{red}{xxx} & \textcolor{red}{xxx} \\ \hline
+
+\end{tabular}
+\end{minipage}
+
+\vspace{15pt}
+
+\begin{minipage}{0.48\textwidth}\centering
+\begin{tabular}{|l|r|r|}
+\hline
+\multicolumn{3}{|c|}{\textbf{CFU Design 2, 8 KB DMEM}} \\ \hline
+Resource & Used & Util. (\%) \\ \hline
+LUTs & 1942 & 3.06 \\ \hline
+FFs  & 1519 & 1.20 \\ \hline
+BRAM & 8.5  & 6.3 \\ \hline
+
+\end{tabular}
+\end{minipage}\hfill
+\begin{minipage}{0.48\textwidth}\centering
+\begin{tabular}{|l|r|r|}
+\hline
+\multicolumn{3}{|c|}{\textbf{CFU Design 2, 512 KB DMEM}} \\ \hline
+Resource & Used & Util. (\%) \\ \hline
+LUTs & 2146  & 3.38 \\ \hline
+FFs  & 1531  & 1.21 \\ \hline
+BRAM & 134.5 & 99.63 \\ \hline
+
+\end{tabular}
+\end{minipage}
+
+\end{table}

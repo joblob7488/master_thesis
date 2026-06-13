@@ -55,7 +55,7 @@ Excluding this first sample, all configurations achieve identical accuracy, conf
 
 This section compares the per-chunk and per-class load strategies on inference time. The results shown are taken from the baseline software implementation, so that the comparison only reflects the strategy. Table \ref{sec:results_loadstrategy} shows the average total inference of each strategy, separated into preload and scoring time for the per-class strategy.
 
-\begin{table}[htpb]
+\begin{table}[H]
 \centering
 \caption{Baseline inference time under the two load strategies, averaged over
 the 200-image test set.}
@@ -68,230 +68,102 @@ Per-class (512 KB DMEM) & 780.71 & 80.32 & 861.05 \\ \hline
 \end{tabular}
 \end{table}
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/load_strategy_persample.png}
+\caption{Per-sample inference time for the baseline implementation under the two load strategies. (a) The per-chunk strategy completes each inference in 329 ms on average. (b) The per-class strategy is dominated by the constant 781 ms model preload, while clause scoring adds only 80 ms, giving a total of 861 ms.}
+\label{fig:load_strategy_persample}
+\end{figure}
+
 \textcolor{red}{sjekk at du har forklart early-exit bra nok tidligere}
 
-The two strategies place the model data in different memories, resulting in different performance results. In the per-chunk strategy, each clause word is read from DDR2 at the moment it is needed during evaluation. The early exit means that most clauses are rejected after their first non-empty chunk, so only a small fraction of the model is read for any given inference. Despite this, the average inference takes 328.96 ms, as every word access pays the latency of a DDR2 read.
+The two strategies place the model data in different memories, resulting in different performance results, shown per sample in Figure \ref{fig:load_strategy_persample}. In the per-chunk strategy, each clause word is read from DDR2 at the moment it is needed during evaluation. The early exit means that most clauses are rejected after their first non-empty chunk, so only a small fraction of the model is read for any given inference. Despite this, the average inference takes 328.96 ms, as every word access pays the latency of a DDR2 read.
 
 The per-class strategy removes the DDR2 reads from the evaluation loop by preloading an entire class into DMEM before scoring it. Once model data is on-chip, scoring is relatively fast, with clause evaluation accounts for only 80.32 ms, approximately a quarter of the per-chunk inference time. The preload however costs 780.71 ms, meaning total inference time rises to 861.05 ms. By not including DDR2 reads in the evaluation loop, the per-class strategy also loses the possibilty for early exit of clauses, meaning every clause must be read in its entirety, resulting a higher amount of total DDR2 reads compared to the per-chunk strategy.
 
 The preload therefore accounts for approximately 91\% of per-class inference time, and the per-class total inference time exceeds the per-chunk total by a factor of roughly 2.6. However, in both strategies it is the movement of model data, rather than clause evaluation, that dominates inference time. 
 
+In Figure \ref{fig:chunk_vs_score_variance} we see more clearly how the early-exit affects the timing of the strategies on a per sample basis.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/chunk_vs_score_variance.png}
+\caption{Per-sample timing variation of the baseline implementation, plotted at the same scale and centered around their respective means for direct comparison. (a) shows the per-chunk total inference times, and (b) shows the per-class scoring time, with the preload excluded.}
+\label{fig:chunk_vs_score_variance}
+\end{figure}
+
+As seen above, Both the per-chunk total and per-class scoring times vary the same on the same samples, however the magnitude of the variance is substantially different, with the per-class scoring time being far more stable. This suggests that, for the per-chunk strategy, a majority of the variance in inference time across samples stems from how many DDR2 reads are required.
+
 \section{Clause Scoring Performance}
 \label{sec:results_scoring}
 
+This section isolates the effect of the custom instructions on clause evaluation. The scoring phase of the per-class strategy is used for the comparison, as it runs entirely from on-chip memory, and therefore exposes any difference between the implementations that DDR2 reads would otherwise hide. Table~\ref{tab:results_scoring} reports the average scoring time of the baseline software implementation, CFU Design 1, and CFU Design 2, together with the speedup relative to the baseline.
+
+\begin{table}[htpb]
+\centering
+\caption{Per-class scoring time for the three implementations, averaged over the 200-image test set, with speedup relative to the baseline software implementation.}
+\label{tab:results_scoring}
+\begin{tabular}{|c|c|c|c|}
+\hline
+Implementation      & Scoring time (ms)     & Speedup (ms)  & Speedup (\%)  \\ \hline
+Baseline software   & 80.32                 & N/A           & N/A           \\ \hline
+CFU Design 1        & 79.64                 & 0.68          & 0.85          \\ \hline
+CFU Design 2        & 81.05                 & -0.73         & -0.91         \\ \hline
+\end{tabular}
+\end{table}
+
+None of the three implementations differ from each other by more than 1.5 ms, which is under 2\% of the scoring time. CFU Design 1 is marginally faster than the baseline, with a 0.85\% speedup, while CFU Design 2 on the other hand is 0.91 \% slower. While small, these differences are consistent across all samples in the test set, as seen in Figure \ref{fig:scoring_comparison}, meaning CFU Design 1 is faster than the baseline on every sample, and CFU Design 2 is slower on every sample.
+
+\begin{figure}[htpb]
+\centering
+\includegraphics[width=\textwidth]{figures/scoring_comparison.png}
+\caption{Per-sample scoring time of the three implementations over the 200-image test set.}
+\label{fig:scoring_comparison}
+\end{figure}
+
+Similar results are found for the per-chunk strategy, as seen in Table \ref{tab:results_inftotal}, though the differences, both relative and absolute, are smaller than with the scoring times. 
+
+\begin{table}[H]
+\centering
+\caption{Per-chunk inference time for the three implementations, averaged over the 200-image test set, with speedup relative to the baseline software implementation.}
+\label{tab:results_inftotal}
+\begin{tabular}{|c|c|c|c|}
+\hline
+Implementation      & Inference time (ms)    & Speedup (ms)  & Speedup (\%)  \\ \hline
+Baseline software   & 328.96                 & N/A           & N/A           \\ \hline
+CFU Design 1        & 328.39                 & 0.57          & 0.17          \\ \hline
+CFU Design 2        & 329.60                 & -0.64         & -0.19         \\ \hline
+\end{tabular}
+\end{table}
+
+These results are a stark contrast to what was found in the preceding project thesis, where a custom instruction similar to the one used in CFU Design 1 achieved a 4.42$\times$ speedup compared to a baseline software implementation. This will be further discussed in Chapter \ref{chap:discussion}.
 
 
 \section{Resource Utilization}
 \label{sec:resource_util}
 
-%   Non-CFU
-\begin{table}[H]
-\centering
-\caption{Resource utilization of NEORV32 processor implemented without a CFU and 8KB DMEM.}
-\begin{tabular}{|l|l|l|l|}
-\hline
-Resource & Used & Available & Utiliziation (\%) \\ \hline
-LUTs     & 1885 & 63400     & 2.97              \\ \hline
-FFs      & 1496 & 126800    & 1.18              \\ \hline
-BRAM     & 8    & 135       & 5.93              \\ \hline
-DSPs     & 0    & 240       & 0.00              \\ \hline
-\end{tabular}
-\label{tab:}
-\end{table}
+The resource utilization of the implemented designs was obtained from the Vivado implementation reports. Table~\ref{tab:res_processor} reports the utilization of the NEORV32 processor for the three implementations at both DMEM sizes, and Table~\ref{tab:res_subsystem} reports the utilization of the DDR2 memory subsystem, which is common to all configurations. Note that DSP slice utilization is not reported as the system does not use any.
 
+\input{Chapters/04Results/1resourcetable.tex}
 
 \begin{table}[H]
 \centering
-\caption{Resource utilization of NEORV32 processor implemented without a CFU and 512KB DMEM.}
-\begin{tabular}{|l|l|l|l|}
+\caption{Resource utilization of the DDR2 memory subsystem (MIG controller and
+AXI interconnect), common to all configurations.}
+\label{tab:res_subsystem}
+\begin{tabular}{|l|r|r|r|r|}
 \hline
-Resource & Used & Available & Utiliziation (\%) \\ \hline
-LUTs     & 2058 & 63400     & 3.25              \\ \hline
-FFs      & 1508 & 126800    & 1.19              \\ \hline
-BRAM     & 134.5    & 135       & 99.63              \\ \hline
-DSPs     & 0    & 240       & 0.00              \\ \hline
+Component               & LUTs & FFs    & BRAM    \\ \hline
+MIG (DDR2 controller)   & 4897 & 4644   & 0       \\ \hline
+AXI interconnect        & 829  & 1771   & 0       \\ \hline
+Subsystem total         & 5726 & 6415   & 0       \\ \hline
 \end{tabular}
-\label{tab:}
 \end{table}
 
+\textcolor{red}{skriv ferdig beskrivelse av tabellene her når du gidder å lage de manglende designene på nytt, spesielt CFU Design 1 beskrivelsene}
 
-%   CFU Design 1
-\begin{table}[H]
-\centering
-\caption{Resource utilization of NEORV32 processor implemented with CFU design 1 and 8KB DMEM.}
-\begin{tabular}{|l|l|l|l|}
-\hline
-Resource & Used & Available & Utiliziation (\%) \\ \hline
-LUTs     & \textcolor{red}{xxx} & 63400     & \textcolor{red}{xxx}              \\ \hline
-FFs      & \textcolor{red}{xxx} & 126800    & \textcolor{red}{xxx}              \\ \hline
-BRAM     & \textcolor{red}{xxx}    & 135       & \textcolor{red}{xxx}              \\ \hline
-DSPs     & 0    & 240       & 0.00              \\ \hline
-\end{tabular}
-\label{tab:}
-\end{table}
+From Table \ref{tab:res_processor} we can see that the addition of custom instruction adds little logic to the processor. With a 8 KB DMEM size, CFU Design 2 uses 1942 LUTs and 1519 flip-flops against the 1885 LUTs and 1496 flip-flops of the baseline implementation, an increase of 57 LUTs and 23 flip-flops. \textcolor{red}{skriv noe tilsvarende om CFU design 1}. 
 
+Increasing the DMEM size to 512 KB on the other hand has a larger effect on logic than the addition of custom instructions has. For the baseline implementation, increasing the DMEM size from 8 KB to 512 KB raises the amount of LUTs from 1885 to 2058, which is an increase of 173, which exceeds the amount added by the introduction of the CFU.  This is due to the fact that the 512 KB DMEM is too large to be held entirely in block RAM, so part of it is implemented as LUTs.
 
-\begin{table}[H]
-\centering
-\caption{Resource utilization of NEORV32 processor implemented with CFU design 1 and 512KB DMEM.}
-\begin{tabular}{|l|l|l|l|}
-\hline
-Resource & Used & Available & Utiliziation (\%) \\ \hline
-LUTs     & \textcolor{red}{xxx} & 63400     & \textcolor{red}{xxx}              \\ \hline
-FFs      & \textcolor{red}{xxx} & 126800    & \textcolor{red}{xxx}              \\ \hline
-BRAM     & \textcolor{red}{xxx}    & 135       & \textcolor{red}{xxx}              \\ \hline
-DSPs     & 0    & 240       & 0.00              \\ \hline
-\end{tabular}
-\label{tab:}
-\end{table}
-
-
-%   CFU Design 2
-\begin{table}[H]
-\centering
-\caption{Resource utilization of NEORV32 processor implemented with CFU design 2 and 8KB DMEM.}
-\begin{tabular}{|l|l|l|l|}
-\hline
-Resource & Used & Available & Utiliziation (\%) \\ \hline
-LUTs     & \textcolor{red}{xxx} & 63400     & \textcolor{red}{xxx}              \\ \hline
-FFs      & \textcolor{red}{xxx} & 126800    & \textcolor{red}{xxx}              \\ \hline
-BRAM     & \textcolor{red}{xxx}    & 135       & \textcolor{red}{xxx}              \\ \hline
-DSPs     & 0    & 240       & 0.00              \\ \hline
-\end{tabular}
-\label{tab:}
-\end{table}
-
-
-\begin{table}[H]
-\centering
-\caption{Resource utilization of NEORV32 processor implemented with CFU design 2 and 512KB DMEM.}
-\begin{tabular}{|l|l|l|l|}
-\hline
-Resource & Used & Available & Utiliziation (\%) \\ \hline
-LUTs     & 2146 & 63400     & 3.38              \\ \hline
-FFs      & 1531 & 126800    & 1.21              \\ \hline
-BRAM     & 134.5    & 135       & 99.63              \\ \hline
-DSPs     & 0    & 240       & 0.00              \\ \hline
-\end{tabular}
-\label{tab:}
-\end{table}
-
-% MIG
-\begin{table}[H]
-\centering
-\caption{Resource utilization of MIG.}
-\begin{tabular}{|l|l|l|l|}
-\hline
-Resource & Used & Available & Utiliziation (\%) \\ \hline
-LUTs     & 4897 & 63400     & 7.72              \\ \hline
-FFs      & 4644 & 126800    & 3.66              \\ \hline
-BRAM     & 0    & 135       & 0.00              \\ \hline
-DSPs     & 0    & 240       & 0.00              \\ \hline
-\end{tabular}
-\label{tab:}
-\end{table}
-
-% AXI Interconnect
-\begin{table}[H]
-\centering
-\caption{Resource utilization of AXI Interconnect.}
-\begin{tabular}{|l|l|l|l|}
-\hline
-Resource & Used & Available & Utiliziation (\%) \\ \hline
-LUTs     & 829 & 63400     & 1.31              \\ \hline
-FFs      & 1771 & 126800    & 1.4              \\ \hline
-BRAM     & 0    & 135       & 0.00              \\ \hline
-DSPs     & 0    & 240       & 0.00              \\ \hline
-\end{tabular}
-\label{tab:}
-\end{table}
-
-% Total (Non-CFU, 512KB DMEM)
-\begin{table}[H]
-\centering
-\caption{Total resource utilization, without CFU and 512KB.}
-\begin{tabular}{|l|l|l|l|}
-\hline
-Resource & Used & Available & Utiliziation (\%) \\ \hline
-LUTs     & 7784 & 63400     & 12.28              \\ \hline
-FFs      & 7923 & 126800    & 6.25              \\ \hline
-BRAM     & 134.5    & 135       & 99.63              \\ \hline
-DSPs     & 0    & 240       & 0.00              \\ \hline
-\end{tabular}
-\label{tab:}
-\end{table}
-
-% Total (Non-CFU, 8KB DMEM)
-\begin{table}[H]
-\centering
-\caption{Total resource utilization, without CFU and 8KB.}
-\begin{tabular}{|l|l|l|l|}
-\hline
-Resource & Used & Available & Utiliziation (\%) \\ \hline
-LUTs     & 7615 & 63400     & 12.01              \\ \hline
-FFs      & 7911 & 126800    & 6.24              \\ \hline
-BRAM     & 8    & 135       & 5.93              \\ \hline
-DSPs     & 0    & 240       & 0.00              \\ \hline
-\end{tabular}
-\label{tab:}
-\end{table}
-
-% Total (CFU 1, 512KB DMEM)
-\begin{table}[H]
-\centering
-\caption{Total resource utilization, with CFU design 1 and 512KB.}
-\begin{tabular}{|l|l|l|l|}
-\hline
-Resource & Used & Available & Utiliziation (\%) \\ \hline
-LUTs     & 7872 & 63400     & 12.42              \\ \hline
-FFs      & 7945 & 126800    & 6.27              \\ \hline
-BRAM     & 134.5    & 135       & 99.63              \\ \hline
-DSPs     & 0    & 240       & 0.00              \\ \hline
-\end{tabular}
-\label{tab:}
-\end{table}
-
-% Total (CFU 1, 512KB DMEM)
-\begin{table}[H]
-\centering
-\caption{Total resource utilization, with CFU design 1 and 8KB.}
-\begin{tabular}{|l|l|l|l|}
-\hline
-Resource & Used & Available & Utiliziation (\%) \\ \hline
-LUTs     & 7872 & 63400     & 12.42              \\ \hline
-FFs      & 7945 & 126800    & 6.27              \\ \hline
-BRAM     & 134.5    & 135       & 99.63              \\ \hline
-DSPs     & 0    & 240       & 0.00              \\ \hline
-\end{tabular}
-\label{tab:}
-\end{table}
-
-% Total (CFU 2, 512KB DMEM)
-\begin{table}[H]
-\centering
-\caption{Total resource utilization, with CFU design 2 and 512KB.}
-\begin{tabular}{|l|l|l|l|}
-\hline
-Resource & Used & Available & Utiliziation (\%) \\ \hline
-LUTs     & 7872 & 63400     & 12.42              \\ \hline
-FFs      & 7945 & 126800    & 6.27              \\ \hline
-BRAM     & 134.5    & 135       & 99.63              \\ \hline
-DSPs     & 0    & 240       & 0.00              \\ \hline
-\end{tabular}
-\label{tab:}
-\end{table}
-
-% Total (CFU 2, 512KB DMEM)
-\begin{table}[H]
-\centering
-\caption{Total resource utilization, with CFU design 2 and 8KB.}
-\begin{tabular}{|l|l|l|l|}
-\hline
-Resource & Used & Available & Utiliziation (\%) \\ \hline
-LUTs     & 7872 & 63400     & 12.42              \\ \hline
-FFs      & 7945 & 126800    & 6.27              \\ \hline
-BRAM     & 134.5    & 135       & 99.63              \\ \hline
-DSPs     & 0    & 240       & 0.00              \\ \hline
-\end{tabular}
-\label{tab:}
-\end{table}
+The DDR2 memory subsystem takes up the majority of the logic usage of the complete design, totaling 5726 LUTs, which is more than twice the amount of LUTs of the processor, no matter the configuration. The complete design, with both the processor and the memory subsystem, uses around 12\% of the LUTs and 6\% of the flips-flops available on the Artix-7 100T, depending on the processor configuration. Block RAM, on the other hand, is fully consumed in the configurations needing 512KB DMEM. No DSP slices are used in any configuration, as clause evaluation relies only on bitwise and integer operations, as described in Section~\ref{sec:tm_inference}. In other words, block RAM is the limiting factor, which is why the model needs to reside off-chip in DDR2 and Flash memory. 
