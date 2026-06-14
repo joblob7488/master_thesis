@@ -70,7 +70,7 @@ Per-class (512 KB DMEM) & 780.71 & 80.32 & 861.05 \\ \hline
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{figures/load_strategy_persample.png}
+\includegraphics[width=\textwidth]{Figures/load_strategy_persample.png}
 \caption{Per-sample inference time for the baseline implementation under the two load strategies. (a) The per-chunk strategy completes each inference in 329 ms on average. (b) The per-class strategy is dominated by the constant 781 ms model preload, while clause scoring adds only 80 ms, giving a total of 861 ms.}
 \label{fig:load_strategy_persample}
 \end{figure}
@@ -87,7 +87,7 @@ In Figure \ref{fig:chunk_vs_score_variance} we see more clearly how the early-ex
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{figures/chunk_vs_score_variance.png}
+\includegraphics[width=\textwidth]{Figures/chunk_vs_score_variance.png}
 \caption{Per-sample timing variation of the baseline implementation, plotted at the same scale and centered around their respective means for direct comparison. (a) shows the per-chunk total inference times, and (b) shows the per-class scoring time, with the preload excluded.}
 \label{fig:chunk_vs_score_variance}
 \end{figure}
@@ -116,7 +116,7 @@ None of the three implementations differ from each other by more than 1.5 ms, wh
 
 \begin{figure}[htpb]
 \centering
-\includegraphics[width=\textwidth]{figures/scoring_comparison.png}
+\includegraphics[width=\textwidth]{Figures/scoring_comparison.png}
 \caption{Per-sample scoring time of the three implementations over the 200-image test set.}
 \label{fig:scoring_comparison}
 \end{figure}
