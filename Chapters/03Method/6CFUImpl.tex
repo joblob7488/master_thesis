@@ -154,7 +154,7 @@ The different instructions implemented in the second design operate as follows:
     \item \texttt{GET\_SCORE} returns the final clamped class score as a signed 32-bit value and resets the score accumulator for the next class.
 \end{itemize}
 
-By performing the vote accumulation and threshold clamping in hardware, this design removes the per-clause and per-class scoring arithmetic from the software loop entirely. Like in the first design, each operation incurs the fixed three cycle CFU latency, as all operations complete in a single cycle.
+By performing the vote accumulation and threshold clamping in hardware, this design removes the per-clause and per-class scoring arithmetic from the software loop entirely. Like in the first design, each operation incurs the fixed three cycle CFU latency, however due to the design now being sequential rather than combinatorial, we also get one additional clock cycle of latency.
 
 \subsubsection{Software Integration}
 \label{sec:cfu_design2_sw}
