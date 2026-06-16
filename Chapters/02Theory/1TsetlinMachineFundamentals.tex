@@ -13,7 +13,7 @@ In the context of machine learning, a \textit{feature} $x_i$ is measurable chara
     \label{eq:feature_vector}
 \end{equation}
 
-where $o$ is the number of features. Features can be continuous-valued, integer-valued, or categorical in their raw form. The TM, however, operates on Boolean features, meaning every $x_i \in \{0, 1\}$. \textcolor{red}{gå over denne setningen igjen hehe}Data that is not already binary must be converted through a preprocessing step called \textit{booleanization} (or \textit{thresholding}) which converts each feature into binary features \textcolor{red}{CITE GRANMO}. One common strategy is to select a set of threshold values for each feature and encode whether the original value exceeds each threshold, producing one binary indicator per threshold. \textcolor{red}{denne setningen er fucked lol}
+where $o$ is the number of features. Features can be continuous-valued, integer-valued, or categorical in their raw form. The TM, however, operates on Boolean features, meaning every $x_i \in \{0, 1\}$. Data that is not already binary must be converted through a preprocessing step called \textit{booleanization} (or \textit{thresholding}) which converts continuous features into binary features \textcolor{red}{CITE GRANMO}. This can be done by selecting a threshold value, which determines the binary value of a feature depending on wether the original value exceeds the threshold or not, as shown in Figure \ref{fig:thresh}.
 
 \begin{figure}[H]
     \centering
@@ -21,8 +21,6 @@ where $o$ is the number of features. Features can be continuous-valued, integer-
     \caption{Simple example of boolenization by using thresholding.}
     \label{fig:thresh}
 \end{figure}
-
-\textcolor{red}{ADD A FIGURE SHOWING booleanization of a continuous feature into binary threshold indicators}
 
 To enable the TM to not only have knowledge of the existence of a feature, but its absence as well, the input is extended with the negated of each feature. This is done by appending the feature vector $X$ with the vector of negated features $\lnot X$. This resulting vector is called the \textit{literal vector}
 
@@ -51,14 +49,12 @@ A special case arises when $S_j = \emptyset$, meaning no literal has been includ
 \begin{figure}[H]
     \centering
     \includegraphics[width =0.9\textwidth]{Figures/clause_out.png}
-    \caption{Block diagram of clause output $C_j$ evaluation, with include/exclude signals for each literal, which handles the \textit{all-exclude} case.}
+    \caption{Block diagram of clause output $C_j$ evaluation, with include/exclude signals for each literal, which handles the \textit{all-exclude} case. \textcolor{red}{lag denne figuren på nytt med mye større skriftstørrelse}}
     \label{fig:clause_out}
 \end{figure}
 
 Clauses are divided into two groups: \textit{positive clauses} which vote in favour of a given class, and \textit{negative clauses} which vote against it. The class score is obtained by adding the sum positive clause outputs and subtracting the sum of the negative clause outputs. This voting structure lets the TM represent a class through multiple independent clauses, which can capture a wider range of patterns.
 
-\textcolor{red}{ADD A FIGURE SHOWING clause evaluation: literal vector input,
-include/exclude decisions, AND reduction to a single output bit}
 
 \subsection{Tsetlin Automata}
 \label{sec:tm_ta}
@@ -68,12 +64,10 @@ The decision-making process behind whether or not a literal should be included i
 \begin{figure}[H]
     \centering
     \includegraphics[width =0.9 \textwidth]{Figures/TsetlinAutomata.png}
-    \caption{State diagram of a Tsetlin Automaton.}
+    \caption{State diagram of a Tsetlin Automaton. \textcolor{red}{tydeliggjør at denne er gjenbrukt}}
     \label{fig:tsetlinautomata}
 \end{figure}
 
-\textcolor{red}{ADD A FIGURE SHOWING the TA state diagram with Exclude and
-Include halves, reward and penalty transitions}
 
 For a TA with parameter $N$, the $2N$ states are split in the middle, with states $1$ through $N$ corresponding to the \textit{Exclude} action ($l_k \notin S_j$), and states $N+1$ through $2N$ corresponding to the \textit{Include} action
 ($l_k \in S_j$). Each TA operates independently using only its state as memory, making them compact and open to parallelization.
@@ -90,7 +84,7 @@ independent TM for each class $c \in \{0, 1, \ldots, K-1\}$
 \begin{figure}[H]
     \centering
     \includegraphics[width =0.6\textwidth]{Figures/mctm_blokk.png}
-    \caption{Block diagram showing two Tsetlin Machines in a multi-class configuration.}
+    \caption{Block diagram showing two Tsetlin Machines in a multi-class configuration. \textcolor{red}{tydeliggjør at denne er gjenbrukt}}
     \label{fig:multiclass_tm}
 \end{figure}
 
@@ -120,9 +114,6 @@ This clamping applies during training when computing feedback probabilities. At 
 Each class therefore contributes independently scores, and the final prediction is the class whose clauses produce the strongest positive vote. 
 
 
-
-\textcolor{red}{ADD A FIGURE SHOWING multi-class TM structure: $K$ independent
-clause banks feeding into $K$ score accumulators and an argmax block}
 
 \subsection{Inference Algorithm}
 \label{sec:tm_inference}

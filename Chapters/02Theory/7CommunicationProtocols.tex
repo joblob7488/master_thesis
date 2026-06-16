@@ -1,19 +1,38 @@
 \section{Communication Protocols}
 \label{sec:comm_prot}
 
+This section provides a brief overview of the different communication protocols used in this work.
 
 \subsection{UART}
 \label{sec:comm_uart}
+\textcolor{red}{finn kilde til uart}
 
+Universal Asynchronous Receiver-Transmitter (UART) is a serial, asynchronous communication protocol which uses two wires (a receiver (RX) and a transmitter (TX)) to transfer data between two devices. UART does not require a shared clock signal as it is asynchronous, however the devices communicating have to use the rate of data transfer, called the baud rate, for communication to be possible. A UART frame consists of a starting bit, a number of data bits (usually 8), and a stop it, as shown in Figure \textcolor{red}{lag/finn figur}.
+
+
+\textcolor{red}{UART figur}
 
 \subsection{SPI}
 \label{sec:comm_spi}
+\textcolor{red}{finn kilde til spi}
 
+Serial Peripheral Interface (SPI) is a synchronous serial protocol which uses a master-slave architecture. The master generates a common clock signal (SCLK), and selects which slave to communicate with through a chip select signal (CS). Data is exchanged in two directions at once using two data lines called MOSI (master out, slave in) and MISO (master in, slave out). A connection between a master device and a slave device is shown in Figure \textcolor{red}{lag/finn figur}.
+
+\textcolor{red}{SPI figur}
 
 \subsection{Wishbone}
 \label{sec:comm_wishbone}
+\textcolor{red}{finn kilde til wishbone}
+
+Wishbone is an open source bus created to let different cores or IPs communicate inside of a chip, like on an FPGA. In short, it uses a master-slave architecture, and uses a handshake system where a master requests a slave to perform an action (read/write), and waits for the slave to communicate wether or not it ready to perform/has completed the action. It features various signals, like a cycle signal (CYC) letting device claim the Wishbone bus, however in depth understanding is not needed for this work. A more in depth explanation is given in \textcolor{red}{source} 
 
 
 \subsection{AXI4}
 \label{sec:comm_axi4}
+\textcolor{red}{finn kilde til axi4}
 
+The Advanced eXtensible Inferface (AXI) is an on-chip bus protocol similar to Wishbone, created by ARM. While not open source, it is royalty-free and freely available. It has also been adopted by Xilinx as the main communication bus in their products. It features a handshake system like in Wishbone, as well as the master-slave architecture. For communication it uses five channels, Read Address (AR), Read Data (R), Write Address (AW), Write Data (W), and Write Response (B). Each channel is independent of the others, which opens up the possibility for parallel read and write operations between devices. 
+
+\textcolor{red}{det er litt vanskelig å lage figur for å vise dette da det er sånn 100 måter dette kan gjøres på da det er parallelt haha}
+
+\textcolor{red}{AXI4 figur}
