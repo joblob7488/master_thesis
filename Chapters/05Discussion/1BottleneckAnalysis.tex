@@ -14,23 +14,21 @@ As seen in Table \ref{tab:results_loadstrategy}, for the per-class baseline soft
     \label{eq:eff_bandwidth}
 \end{equation}
 
-This rate is far below the data rate the DDR2 SDRAM is capable of sustaining. The DDR2 SDRAM component provided by the Nexys A7 board has a maximum data rate of 667 MT/s (mega transfers per second), and a data width of 16 bits, amounting to approximately 1.33 GB/s \cite{micron_mt47h64m16hr}. This means the preload only achieves around 0.4\% of the peak transfer rate, indicating that the DDR2 component itself is not the limiting factor. This discrepancy is likely instead caused by how words are read from DDR2 across the XBUS one 32-bit word at a time, meaning each read incurs the full latency overhead of an individual transaction. Both the XBUS and the DDR2 component support burst reads, which allows for a sequence of addresses to be transmitted in quick succession, as shown in Figure \textcolor{red}{legg inn fig}\cite{micron_mt47h64m16hr,Nolting2024Datasheet}. By enabling burst reads, the many sequential DDR2 reads in the preload could likely be done a lot faster than what is currently achieved.
+This rate is far below the data rate the DDR2 SDRAM is capable of sustaining. The DDR2 SDRAM component provided by the Nexys A7 board has a maximum data rate of 667 MT/s (mega transfers per second), and a data width of 16 bits, amounting to approximately 1.33 GB/s \cite{micron_mt47h64m16hr}. This means the preload only achieves around 0.4\% of the peak transfer rate, indicating that the DDR2 component itself is not the limiting factor. This discrepancy is likely instead caused by how words are read from DDR2 across the XBUS one 32-bit word at a time, meaning each read incurs the full latency overhead of an individual transaction. Both the XBUS and the DDR2 component support burst reads, which allows for a sequence of addresses to be transmitted in quick succession, as shown in Figure \ref{fig:burstread}\cite{micron_mt47h64m16hr,Nolting2024Datasheet}. By enabling burst reads, the many sequential DDR2 reads in the preload could likely be done a lot faster than what is currently achieved.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{Figures/single_read.png}
-\caption{Per-sample inference time for the baseline implementation under the two load strategies. (a) The per-chunk strategy completes each inference in 329 ms on average. (b) The per-class strategy is dominated by the constant 781 ms model preload, while clause scoring adds only 80 ms, giving a total of 861 ms.}
-\label{fig:load_strategy_persample}
+\caption{Single access read operation \cite{Nolting2024Datasheet}.}
+\label{fig:singleread}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{Figures/burst_read.png}
-\caption{Per-sample inference time for the baseline implementation under the two load strategies. (a) The per-chunk strategy completes each inference in 329 ms on average. (b) The per-class strategy is dominated by the constant 781 ms model preload, while clause scoring adds only 80 ms, giving a total of 861 ms.}
-\label{fig:load_strategy_persample}
+\caption{Burst read transfer \cite{Nolting2024Datasheet}.}
+\label{fig:burstread}
 \end{figure}
-
-\textcolor{red}{legg inn figuren som viser xbus burst reads fra datasheet}
 
 
 As explained in Section \ref{sec:per_chunk}, the per-chunk strategy accesses model data through a different strategy, however it is still by the same underlying cost as the per-class strategy. Here each mask word is read from DDR2 at the moment it is needed during evaluation, and the early exit terminates a clause after its first failing chunk. This leads to only part of the model being read for any given inference. Despite reading far less data than the per-class strategy, memory access is still the main bottleneck. This can be seen in Figure \ref{fig:chunk_vs_score_variance}, where the standard deviation $\sigma$ of the per-chunk inference time is 3.6 $\times$ higher than that of the per-class scoring time. As the difference between the two is that per-chunk inference reads the chunk words from DDR2, this points to the fact that the large difference in timing also stems from this.

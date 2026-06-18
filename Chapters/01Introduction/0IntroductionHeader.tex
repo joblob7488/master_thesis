@@ -11,6 +11,9 @@ Processor-oriented acceleration preserves programmability by embedding domain-sp
 This thesis builds on that work by examining how the approach scales to a realistic workload, specifically MNIST digit classification. Whereas the previous work operated on a model of 480 bytes, this work targets a model of approximately 3.81\,MB, an increase of roughly $8000\times$. A scaling of this magnitude introduces a qualitatively different challenge: the model far exceeds the processor's internal memories, placing memory bandwidth rather than computation at the centre of the performance problem.
 
 
-\textcolor{red}{husk å legge til fn bærekraftsmål seksjon}
+\section{UN Sustainability Goals}
+This work relates to two of the United Nations Sustainable Development Goals~\cite{UNSDG}. The first is Goal 7, Affordable and Clean Energy. As machine learning inference on edge devices becomes more widespread, the energy it consumes is a growing concern, particularly for battery-powered IoT nodes. The Tsetlin Machine performs inference using only bitwise operations and integer arithmetic, avoiding the multiply-accumulate and floating-point operations that dominate the energy cost of conventional neural networks. Investigating how such a model can be executed efficiently on low-power hardware contributes to reducing the energy demand of on-device intelligence. The second is Goal 9, Industry, Innovation and Infrastructure. This work is built on open and royalty-free foundations, namely the RISC-V instruction set architecture and the open-source NEORV32 soft-core processor, which lower the barrier to developing custom computing hardware. Exploring how application-specific acceleration can be added to an open processor rather than a proprietary platform supports innovation in accessible and adaptable computing
+infrastructure.
+
 
 \input{Chapters/01Introduction/6RelatedWorks.tex}

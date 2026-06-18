@@ -5,12 +5,14 @@ The system is to meant to be able do perform classification on the MNIST dataset
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width =1.2\textwidth]{Figures/blokk_diag.jpg}
+    \includegraphics[width =1\textwidth]{Figures/blokk_diag.png}
     \caption{Block diagram of the full system, showing the NEORV32 processor 
     connected to DDR2 SDRAM via the AXI interconnect and MIG controller, and 
-    to QSPI Flash via the SPI peripheral and STARTUPE2 wrapper. \textcolor{red}{MIDLERTIDIG, LAG I DRAW.IO}}
+    to QSPI Flash via the STARTUPE2 wrapper.}
     \label{fig:sys_arch}
 \end{figure}
+
+
 
 The overall architecture is organized around three tiers of memory with distinct access characteristics. The trained model is stored persistently in on-board QSPI Flash \cite{infineon_s25fl127s}, which survives power cycles but is too slow for direct inference use. At boot, the model is transferred from Flash into DDR2 SDRAM \cite{micron_mt47h64m16hr}, which provides sufficient capacity for the full model and faster sequential access. During inference, model data is moved from DDR2 into the processor's internal DMEM, where clause evaluation is performed from fast on-chip storage.
 
