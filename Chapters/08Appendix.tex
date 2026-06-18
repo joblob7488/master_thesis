@@ -1,6 +1,6 @@
 
 
-\chapter*{A - Github Repository}
+\chapter{Github Repository}
 \addcontentsline{toc}{chapter}{\protect\numberline{}A - Github repository} 
 
 All code used in this document are included in the Github repository linked below.
@@ -8,7 +8,8 @@ All code used in this document are included in the Github repository linked belo
 \url{https://github.com/joblob7488/master_code.git}
 
 
-\chapter*{B - CFU Design 1 VHDL}
+\chapter{CFU Design 1 VHDL}
+\label{app:cfu1vhdl}
 \addcontentsline{toc}{chapter}{\protect\numberline{}B - CFU Design 1 VHDL} 
 \begin{minted}{vhdl}
 library ieee;
@@ -106,7 +107,8 @@ end neorv32_cpu_cp_cfu_rtl;
 \end{minted}
 
 
-\chapter*{C - CFU Design 2 VHDL }
+\chapter{CFU Design 2 VHDL }
+\label{app:cfu2vhdl}
 \addcontentsline{toc}{chapter}{\protect\numberline{}C - CFU Design 2 VHDL } 
 \begin{minted}{vhdl}
 library ieee;
@@ -265,8 +267,8 @@ end neorv32_cpu_cp_cfu_rtl;
 \end{minted}
 
 
-\chapter*{D - Non-CFU Per-Chunk Inference}
-\addcontentsline{toc}{chapter}{\protect\numberline{}D - Non-CFU Per-Chunk Inference} 
+\chapter{Non-CFU Per-Chunk Inference}
+% \addcontentsline{toc}{chapter}{\protect\numberline{}D - Non-CFU Per-Chunk Inference} 
 \begin{minted}{c}
 #include <neorv32.h>
 #include <neorv32_spi.h>
@@ -523,8 +525,8 @@ int main(void) {
 \end{minted}
 
 
-\chapter*{E - CFU Design 1 Per-Chunk Inference}
-\addcontentsline{toc}{chapter}{\protect\numberline{}E - CFU Design 1 Per-Chunk Inference} 
+\chapter{CFU Design 1 Per-Chunk Inference}
+% \addcontentsline{toc}{chapter}{\protect\numberline{}E - CFU Design 1 Per-Chunk Inference} 
 \begin{minted}{c}
 #include <neorv32.h>
 #include <neorv32_spi.h>
@@ -796,8 +798,8 @@ int main(void) {
 \end{minted}
 
 
-\chapter*{F - CFU Design 2 Per-Chunk Inference}
-\addcontentsline{toc}{chapter}{\protect\numberline{}F - CFU Design 2 Per-Chunk Inference} 
+\chapter{CFU Design 2 Per-Chunk Inference}
+% \addcontentsline{toc}{chapter}{\protect\numberline{}F - CFU Design 2 Per-Chunk Inference} 
 \begin{minted}{c}
 #include <neorv32.h>
 #include <neorv32_spi.h>
@@ -1079,8 +1081,8 @@ int main(void) {
 \end{minted}
 
 
-\chapter*{G - Non-CFU Per-Class Inference}
-\addcontentsline{toc}{chapter}{\protect\numberline{}G - Non-CFU Per-Class Inference} 
+\chapter{Non-CFU Per-Class Inference}
+% \addcontentsline{toc}{chapter}{\protect\numberline{}G - Non-CFU Per-Class Inference} 
 \begin{minted}{c}
 #include <neorv32.h>
 #include <neorv32_spi.h>
@@ -1353,17 +1355,10 @@ int main(void) {
 \end{minted}
 
 
-\chapter*{H - CFU Design 1 Per-Class Inference}
-\addcontentsline{toc}{chapter}{\protect\numberline{}H - CFU Design 1 Per-Class Inference} 
+\chapter{CFU Design 1 Per-Class Inference}
+% \addcontentsline{toc}{chapter}{\protect\numberline{}H - CFU Design 1 Per-Class Inference} 
 
 \begin{minted}{c}
-// ================================================================================ //
-// TM Inference Benchmark - CFU, per-class DMEM preload                             //
-// Loads model from flash into DDR2 at startup.                                     //
-// During inference, preloads one class at a time from DDR2 into DMEM,              //
-// then runs CFU clause evaluation against the fast DMEM buffer.                    //
-// ================================================================================ //
-
 #include <neorv32.h>
 #include <neorv32_spi.h>
 #include <stdint.h>
@@ -1645,8 +1640,8 @@ int main(void) {
 \end{minted}
 
 
-\chapter*{I - CFU Design 2 Per-Class Inference}
-\addcontentsline{toc}{chapter}{\protect\numberline{}I - CFU Design 2 Per-Class Inference}
+\chapter{CFU Design 2 Per-Class Inference}
+% \addcontentsline{toc}{chapter}{\protect\numberline{}I - CFU Design 2 Per-Class Inference}
 \begin{minted}{c}
 #include <neorv32.h>
 #include <neorv32_spi.h>
@@ -1939,8 +1934,8 @@ int main(void) {
 }
 \end{minted}
 
-\chapter*{J - Benchmark Inference Python Script}
-\addcontentsline{toc}{chapter}{\protect\numberline{}J - Benchmark Inference Python Script}
+\chapter{Benchmark Inference Python Script}
+% \addcontentsline{toc}{chapter}{\protect\numberline{}J - Benchmark Inference Python Script}
 
 \begin{minted}{python3}
 import argparse
@@ -2169,8 +2164,8 @@ if __name__ == "__main__":
     main()
 \end{minted}
 
-\chapter*{K - Python Model Transfer Script}
-\addcontentsline{toc}{chapter}{\protect\numberline{}K - Python Model Transfer Script}
+\chapter{Python Model Transfer Script}
+% \addcontentsline{toc}{chapter}{\protect\numberline{}K - Python Model Transfer Script}
 \begin{minted}{python3}
 import argparse
 import serial
@@ -2282,8 +2277,8 @@ if __name__ == "__main__":
     main()
 \end{minted}
 
-\chapter*{L - Write Model To Flash Script}
-\addcontentsline{toc}{chapter}{\protect\numberline{}L - Write Model To Flash Script}
+\chapter{Write Model To Flash Script}
+% \addcontentsline{toc}{chapter}{\protect\numberline{}L - Write Model To Flash Script}
 \begin{minted}{c}
 #include <neorv32.h>
 #include <neorv32_spi.h>
@@ -2473,8 +2468,9 @@ int main(void) {
 }
 \end{minted}
 
-\chapter*{M - Python Exe Uploader Script}
-\addcontentsline{toc}{chapter}{\protect\numberline{}M - Python Exe Uploader Script}
+\chapter{Python Exe Uploader Script}
+\label{app:exe_uploader}
+% \addcontentsline{toc}{chapter}{\protect\numberline{}M - Python Exe Uploader Script}
 \begin{minted}{python3}
 import sys
 import time
