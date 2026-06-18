@@ -1,7 +1,7 @@
 \section{System Architecture Overview}
 \label{sec:sys_overview}
 
-The system is to meant to be able do perform classification on the MNIST dataset, by using a TM model with 2000 clauses across 10 classes. The images in MNIST are $28 \times 28$ pixels large, meaning the feature vector $X$ is 784 bits long, and the literal vector (and action bit plane of each clause) will be 1568 bits long. This results in total model size of almost 4 MB. This not only far exceeds the NEORV32's default DMEM size of 8 kB, this also exceeds the total amount of available Block RAM (BRAM) available on the Artix-7 100T which is 607.5 kB. Memory is there a central design challenge in this work, which resulted in a multi-tier storage architecture, as shown in Figure \ref{fig:sys_arch}.
+The system is to meant to be able to perform classification on the MNIST dataset, by using a TM model with 2000 clauses across 10 classes. The images in MNIST are $28 \times 28$ pixels large, meaning the feature vector $X$ is 784 bits long, and the literal vector (and action bit plane of each clause) will be 1568 bits long. This results in total model size of almost 4 MB. This not only far exceeds the NEORV32's default DMEM size of 8 kB, this also exceeds the total amount of available Block RAM (BRAM) available on the Artix-7 100T which is 607.5 kB. Memory is there a central design challenge in this work, which resulted in a multi-tier storage architecture, as shown in Figure \ref{fig:sys_arch}.
 
 \begin{figure}[H]
     \centering
