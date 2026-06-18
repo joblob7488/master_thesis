@@ -2,13 +2,13 @@
 \section{RISC-V Instruction Set Architecture}
 \label{sec:riscv}
 
-RISC-V is a free and open instruction set architecture (ISA) developed at the University of California, Berkeley, and is currently maintained by RISC-V International \textcolor{red}{SOURCE}. Unlike proprietary ISAs like x86 and ARM, RISC-V is open-source and royalty-free, making it a popular choice in research. Its relevance in this project comes from the fact that it is well suited for extending the instruction set with user-defined custom operations.
+RISC-V is a free and open instruction set architecture (ISA) developed at the University of California, Berkeley, and is currently maintained by RISC-V International \cite{AsanovicPatterson2014}. Unlike proprietary ISAs like x86 and ARM, RISC-V is open-source and royalty-free, making it a popular choice in research. Its relevance in this project comes from the fact that it is well suited for extending the instruction set with user-defined custom operations.
 
 \subsection{Overview and Design Philosophy}
 \label{sec:riscv_overview}
-RISC-V is a reduced instruction set computer (RISC) architecture, meaning it operates on a smaller set of simple instructions. This is in contrast to complex instruction set computer (CISC) architectures, which provide a larger set of more specialized instructions \textcolor{red}{her trengs det kilder altså}. In a RISC architecture, complex operations are instead composed of multiple smaller, more simple instructions.
+RISC-V is a reduced instruction set computer (RISC) architecture, meaning it operates on a smaller set of simple instructions. This is in contrast to complex instruction set computer (CISC) architectures, which provide a larger set of more specialized instructions \cite{patterson1980risc}. In a RISC architecture, complex operations are instead composed of multiple smaller, more simple instructions.
 
-One of the core principles of RISC-V is the separation of the mandatory base ISA, and the numerous optional extensions. The base ISA provides the minimum instruction set for a processor to function, while all other functionality can be added to fit the needs of the user. \textcolor{red}{sjekk opp hvilke typiske extensions som du kan bruke som eksempler.} This modularity makes RISC-V highly scalable, suitable for implementations ranging from small microcontrollers to high-performance server processors \textcolor{red}{vet at på en RISC-V konferanse så ble dette nevnt}.
+One of the core principles of RISC-V is the separation of the mandatory base ISA, and the numerous optional extensions \cite{AsanovicPatterson2014,riscv_unpriv_isa}. The base ISA provides the minimum instruction set for a processor to function, while all other functionality can be added to fit the needs of the user. This modularity makes RISC-V highly scalable, suitable for implementations ranging from small microcontrollers to high-performance server processors \textcolor{red}{vet at på en RISC-V konferanse så ble dette nevnt}.
 
 Another deliberate design choice is that RISC-V was designed with custom ISA extensions in mind. The instruction encoding explicitly reserves opcode space for custom extensions, enabling users to add application specific instructions without conflicting with the current standard extensions.
 
@@ -41,7 +41,6 @@ The combination RV32IMAC, for example, means a 32-bit processor is implementing 
 \subsection{Custom Extensions and Application-Specific Instructions}
 \label{sec:riscv_custom}
 
-\textcolor{red}{is there too much repetition here now?}
 As mentioned earlier in Section~\ref{sec:riscv_overview}, the RISC-V ISA reserves opcode space for custom instructions and custom extensions (sets of instructions). Custom instruction are useful for accelerating computationally intensive operations which appear often in specific workloads. For example, by encoding a multi-step operation as a single instruction, the processor can perform the equivalent computation in fewer cycles than a software implementation using the standard ISA, and the operation can be offloaded to a dedicated hardware unit. This makes custom instructions particularly relevant in domains such as machine learning, cryptography, and digital signal processing. Typical use cases include:
 
 \begin{itemize}
@@ -113,7 +112,7 @@ In the standard 32-bit RISC-V ISA, all instructions are fixed-width 32-bit words
   \bitbox{20}{imm[19:0]}  
 \end{bytefield}
 
-\caption{RISC-V instruction formats (examples). \textcolor{red}{tydeliggjør at denne er gjenbrukt}}
+\caption{RISC-V instruction formats (examples) \cite{JB2025}.}
 \label{fig:insttypes}
 \end{figure}
 

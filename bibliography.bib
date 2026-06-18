@@ -1,4 +1,16 @@
 % ------------------------------------
+% Prosjektrapport
+% ------------------------------------
+@unpublished{JB2025,
+  author = {Jonas Brandt},
+  note = {Project thesis for the course TFE4595},
+  title = {Processor-level Accleration of TsetlinMachines Using Custom RISC-V ISA Extensions},
+  year = {2025}
+}
+
+
+
+% ------------------------------------
 % Tsetlin Machine
 % ------------------------------------
 
@@ -124,6 +136,17 @@ title = {An All-Digital 8.6-nJ/Frame 65-nm Tsetlin Machine Image Classification 
 language = {eng},
 author = {Anders Tunheim, Svein and Zheng, Yujin and Jiao, Lei and Shafik, Rishad and Yakovlev, Alex and Granmo, Ole Christoffer},
 keywords = {accelerator ; Accuracy ; CMOS technology ; Convolution ; Energy efficiency ; Field programmable gate arrays ; Image classification ; Machine learning ; Neural networks ; Power demand ; Training ; Tsetlin machine},
+}
+
+% Fast TM inf w/ Instruction level optimization
+@misc{zeng2025fastcompacttsetlinmachine,
+      title={Fast and Compact Tsetlin Machine Inference on CPUs Using Instruction-Level Optimization}, 
+      author={Yefan Zeng and Shengyu Duan and Rishad Shafik and Alex Yakovlev},
+      year={2025},
+      eprint={2510.15653},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2510.15653}, 
 }
 
 
@@ -289,4 +312,298 @@ year = {2019},
   pages = {405--413},
   doi = {10.1002/cnm.1640110511},
   url = {https://onlinelibrary.wiley.com/doi/10.1002/cnm.1640110511}
+}
+% ddr2
+@manual{micron_mt47h64m16hr,
+  author       = {{Micron Technology, Inc.}},
+  title        = {{MT47H64M16HR-25H}: 1{G}b {DDR2} {SDRAM} Datasheet},
+  organization = {Micron Technology, Inc.},
+  year         = {2006},
+  note         = {1{G}b ($64$M $\times$ $16$) {DDR2} {SDRAM}, speed grade -25{H}},
+  url          = {https://www.alldatasheet.com/datasheet-pdf/download/519900/MICRON/MT47H64M16HR-25H.html},
+  urldate      = {2026-06-18}
+}
+% flash
+@manual{infineon_s25fl127s,
+  author       = {{Infineon Technologies AG}},
+  title        = {{S25FL127S}: 128 {Mb} (16 {MB}) 3.0 {V} {SPI} Flash Memory Datasheet},
+  organization = {Infineon Technologies AG},
+  year         = {2021},
+  note         = {Formerly Cypress/Spansion},
+  url          = {https://www.infineon.com/assets/row/public/documents/10/49/infineon-s25fl127s-128-mb-16-mb-3.0-v-spi-flash-memory-datasheet-en.pdf},
+  urldate      = {2026-06-18}
+}
+%nexys a7
+@manual{digilent_nexysa7,
+  author       = {{Digilent, Inc.}},
+  title        = {Nexys {A7} {FPGA} Board Reference Manual},
+  organization = {Digilent, Inc.},
+  year         = {2019},
+  url          = {https://digilent.com/reference/programmable-logic/nexys-a7/reference-manual},
+  urldate      = {2026-06-18}
+}
+% 7 series fpgas
+@manual{amd_ds180_7series,
+  author       = {{Advanced Micro Devices, Inc.}},
+  title        = {7 {Series} {FPGAs} Data Sheet: Overview},
+  organization = {Advanced Micro Devices, Inc.},
+  number       = {DS180 (v2.6.1)},
+  year         = {2020},
+  month        = sep,
+  note         = {Formerly Xilinx, Inc.},
+  url          = {https://docs.amd.com/v/u/en-US/ds180_7Series_Overview},
+  urldate      = {2026-06-18}
+}
+
+% mig guide
+@manual{amd_ug586_mis,
+  author       = {{Advanced Micro Devices, Inc.}},
+  title        = {7 {Series} {FPGAs} Memory Interface Solutions User Guide},
+  organization = {Advanced Micro Devices, Inc.},
+  number       = {UG586 (v2.0)},
+  year         = {2014},
+  month        = apr,
+  note         = {Formerly Xilinx, Inc.},
+  url          = {https://docs.amd.com/r/en-US/ug586_7Series_MIS},
+  urldate      = {2026-06-18}
+}
+
+% ucf file
+@online{digilent_sram_to_ddr,
+  author       = {{Digilent, Inc.}},
+  title        = {{SRAM} to {DDR} Component},
+  organization = {Digilent, Inc.},
+  year         = {n.d.},
+  url          = {https://digilent.com/reference/learn/programmable-logic/tutorials/nexys-4-ddr-sram-to-ddr-component/start},
+  urldate      = {2026-06-18}
+}
+% nexys 4 mig guide
+@online{chrispville_migexample,
+  author       = {ChrisPVille},
+  title        = {{mig\_example}: Example using {DDR2} memory and {MIG} {IP} on the {Nexys 4 DDR} / {Nexys A7} {FPGA} Trainer},
+  howpublished = {GitHub repository},
+  year         = {n.d.},
+  url          = {https://github.com/ChrisPVille/mig_example},
+  urldate      = {2026-06-18}
+}
+% missing pin
+@online{digilentforum_missingpin,
+  author       = {{Digilent Forum}},
+  title        = {Nexys 4 {DDR}: Missing Pin Selection Configuration for {ddr2\_addr[13]} in {UCF} File for Memory Interface Generator ({MIG})},
+  howpublished = {Online forum thread},
+  year         = {n.d.},
+  url          = {https://forum.digilent.com/topic/29132-nexys-4-ddr-missing-pin-selection-configuration-for-ddr2_addr13-in-ucf-file-for-memory-interface-generator-mig/},
+  urldate      = {2026-06-18}
+}
+
+% long path vivado
+@online{amd_ar52787_longpath,
+  author       = {{Advanced Micro Devices, Inc.}},
+  title        = {Vivado: {ERROR}: [{Common} 17-143] Path Length Exceeds 260-{Byte} Maximum Allowed by {Windows}},
+  organization = {Advanced Micro Devices, Inc.},
+  number       = {AR\# 52787},
+  note         = {AMD/Xilinx Knowledge Base, formerly Xilinx, Inc.},
+  year         = {n.d.},
+  url          = {https://adaptivesupport.amd.com/s/article/52787?language=en_US},
+  urldate      = {2026-06-18}
+}
+
+% config guide 7 series
+@manual{amd_ug470_config,
+  author       = {{Advanced Micro Devices, Inc.}},
+  title        = {7 {Series} {FPGAs} Configuration User Guide},
+  organization = {Advanced Micro Devices, Inc.},
+  number       = {UG470 (v1.13.1)},
+  year         = {2018},
+  month        = aug,
+  note         = {Formerly Xilinx, Inc.},
+  url          = {https://docs.amd.com/v/u/en-US/ug470_7Series_Config},
+  urldate      = {2026-06-18}
+}
+%startup e2
+@manual{amd_ug953_libraries,
+  author       = {{Advanced Micro Devices, Inc.}},
+  title        = {Vivado Design Suite 7 {Series} {FPGA} and {Zynq-7000} {SoC} Libraries Guide},
+  organization = {Advanced Micro Devices, Inc.},
+  number       = {UG953 (v2021.2)},
+  year         = {2021},
+  note         = {Formerly Xilinx, Inc.; STARTUPE2 primitive},
+  url          = {https://docs.amd.com/r/2021.2-English/ug953-vivado-7series-libraries/STARTUPE2},
+  urldate      = {2026-06-18}
+}
+
+% fast tm
+@online{cair_fast_tm_mnist,
+  author       = {{Centre for Artificial Intelligence Research (CAIR)}},
+  title        = {{fast-tsetlin-machine-with-mnist-demo}: A Fast Tsetlin Machine Implementation Employing Bit-wise Operators, with {MNIST} Demo},
+  howpublished = {GitHub repository},
+  organization = {University of Agder},
+  year         = {2019},
+  url          = {https://github.com/cair/fast-tsetlin-machine-with-mnist-demo},
+  urldate      = {2026-06-18}
+}
+
+% reqp problem (cascading bram)
+@online{amd_community_reqp1962,
+  author       = {{AMD Adaptive SoC and FPGA Support Community}},
+  title        = {{DRC} {REQP-1962}: Vivado Reports {ADDR} Pins of Cascaded {RAMB36E1} Cells Connected to Different Signal},
+  howpublished = {Online forum thread, AMD Customer Community},
+  year         = {n.d.},
+  url          = {https://adaptivesupport.amd.com/s/question/0D54U00008XGeiHSAT/drc-reqp1962-vivado-reports-addr-pins-of-cascaded-ramb36e1-cells-connected-to-different-signal},
+  urldate      = {2026-06-18}
+}
+
+% risc v isa
+@techreport{riscv_unpriv_isa,
+  author       = {Andrew Waterman and Krste Asanovi\'{c} and John Hauser},
+  title        = {The {RISC-V} Instruction Set Manual, Volume {I}: Unprivileged Architecture},
+  institution  = {RISC-V International},
+  type         = {Document Version},
+  number       = {20260120},
+  year         = {2026},
+  month        = jan,
+  url          = {https://docs.riscv.org/reference/isa/_attachments/riscv-unprivileged.pdf},
+  urldate      = {2026-06-18}
+}
+% edge ai
+@ARTICLE{9985008,
+  author={Shuvo, Md. Maruf Hossain and Islam, Syed Kamrul and Cheng, Jianlin and Morshed, Bashir I.},
+  journal={Proceedings of the IEEE}, 
+  title={Efficient Acceleration of Deep Learning Inference on Resource-Constrained Edge Devices: A Review}, 
+  year={2023},
+  volume={111},
+  number={1},
+  pages={42-91},
+  keywords={Edge computing;Image edge detection;Real-time systems;Cloud computing;Artificial intelligence;Optimization;Computer architecture;Neural networks;Deep learning;Algorithm–hardware codesign;artificial intelligence (AI);artificial intelligence on edge (edge-AI);deep learning (DL);model compression;neural accelerator},
+  doi={10.1109/JPROC.2022.3226481}}
+
+@article{patterson1980risc,
+author = {Patterson, David A and Ditzel, David R},
+address = {New York, N.Y. :},
+issn = {0163-5964},
+journal = {Computer architecture news.},
+lccn = {2008202021},
+number = {6},
+publisher = {ACM Special Interest Group on Computer Architecture,},
+title = {The case for the reduced instruction set computer},
+volume = {8},
+year = {1980-10},
+}
+
+
+@techreport{jedec_ddr2,
+  author      = {{JEDEC Solid State Technology Association}},
+  title       = {DDR2 SDRAM Standard},
+  institution = {JEDEC},
+  number      = {JESD79-2F},
+  year        = {2009}
+}
+
+@ARTICLE{flashmemieee,
+  author={Pavan, P. and Bez, R. and Olivo, P. and Zanoni, E.},
+  journal={Proceedings of the IEEE}, 
+  title={Flash memory cells-an overview}, 
+  year={1997},
+  volume={85},
+  number={8},
+  pages={1248-1271},
+  keywords={Flash memory;Nonvolatile memory;Random access memory;Flash memory cells;Power supplies;Economic forecasting;Application software;Hard disks;Semiconductor memory;PROM},
+  doi={10.1109/5.622505}}
+
+@article{lecun_mnist,
+  title={MNIST handwritten digit database},
+  author={LeCun, Yann and Cortes, Corinna and Burges, CJ},
+  journal={ATT Labs [Online]. Available: http://yann.lecun.com/exdb/mnist},
+  volume={2},
+  year={2010}
+}
+
+@INPROCEEDINGS{uart,
+  author={Nanda, Umakanta and Pattnaik, Sushant Kumar},
+  booktitle={2016 3rd International Conference on Advanced Computing and Communication Systems (ICACCS)}, 
+  title={Universal Asynchronous Receiver and Transmitter (UART)}, 
+  year={2016},
+  volume={01},
+  number={},
+  pages={1-5},
+  keywords={Registers;Clocks;Radiation detectors;Receivers;Transmitters;Microcontrollers;Generators;UART;DTE;RS-232C;RxD;TxD},
+  doi={10.1109/ICACCS.2016.7586376}}
+
+  @ARTICLE{spi,
+  author={Leens, Frederic},
+  journal={IEEE Instrumentation and Measurement Magazine}, 
+  title={An introduction to I2C and SPI protocols}, 
+  year={2009},
+  volume={12},
+  number={1},
+  pages={8-13},
+  keywords={Master-slave;Clocks;Protocols;Instruments;Frequency;Topology;Codecs;Voltage;Sampling methods},
+  doi={10.1109/MIM.2009.4762946}}
+
+
+  @online{wade2016axi,
+  author       = {Brandon Wade},
+  title        = {Introduction to {AXI} Protocol: Understanding the {AXI} Interface},
+  howpublished = {ARM Community, SoC Design and Simulation Blog},
+  year         = {2016},
+  url          = {https://developer.arm.com/community/arm-community-blogs/b/soc-design-and-simulation-blog/posts/introduction-to-axi-protocol-understanding-the-axi-interface},
+  urldate      = {2026-06-18}
+}
+
+@online{amd_ar1053914,
+  author       = {{Advanced Micro Devices, Inc.}},
+  title        = {AXI Basics 1 - Introduction to AXI},
+  organization = {Advanced Micro Devices, Inc.},
+  number       = {AR\# 1053914},
+  note         = {AMD/Xilinx Knowledge Base, formerly Xilinx, Inc.},
+  year         = {n.d.},
+  url          = {https://adaptivesupport.amd.com/s/article/1053914?language=en_US},
+  urldate      = {2026-06-18}
+}
+
+@manual{peterson_wishbone,
+  author       = {Wade D. Peterson},
+  title        = {{WISHBONE} System-on-Chip ({SoC}) Interconnection Architecture for Portable {IP} Cores},
+  organization = {OpenCores / FOSSi Foundation},
+  edition      = {Revision B.3},
+  year         = {2019},
+  note         = {Originally authored by Wade D. Peterson, Silicore Corporation; maintained by the FOSSi Foundation},
+  url          = {https://wishbone-interconnect.readthedocs.io/en/latest/},
+  urldate      = {2026-06-18}
+}
+
+@article{kyuzumnist,
+  author       = {Tarin Clanuwat and
+                  Mikel Bober{-}Irizar and
+                  Asanobu Kitamoto and
+                  Alex Lamb and
+                  Kazuaki Yamamoto and
+                  David Ha},
+  title        = {Deep Learning for Classical Japanese Literature},
+  journal      = {CoRR},
+  volume       = {abs/1812.01718},
+  year         = {2018},
+  url          = {http://arxiv.org/abs/1812.01718},
+  eprinttype   = {arXiv},
+  eprint       = {1812.01718},
+  timestamp    = {Thu, 14 Oct 2021 09:15:14 +0200},
+  biburl       = {https://dblp.org/rec/journals/corr/abs-1812-01718.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+@article{fashionmnist,
+  author       = {Han Xiao and
+                  Kashif Rasul and
+                  Roland Vollgraf},
+  title        = {Fashion-MNIST: a Novel Image Dataset for Benchmarking Machine Learning
+                  Algorithms},
+  journal      = {CoRR},
+  volume       = {abs/1708.07747},
+  year         = {2017},
+  url          = {http://arxiv.org/abs/1708.07747},
+  eprinttype   = {arXiv},
+  eprint       = {1708.07747},
+  timestamp    = {Mon, 13 Aug 2018 16:47:27 +0200},
+  biburl       = {https://dblp.org/rec/journals/corr/abs-1708-07747.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
 }

@@ -26,7 +26,7 @@ Clause evaluation follows the bitmask approach established in Section~\ref{sec:t
 In the per-chunk strategy, model words are read directly from DDR2 on demand during clause evaluation. For each clause, the inner loop iterates over the 25 word positions, reading the positive and negative mask words for that position from DDR2 immediately before they are used. The most relevant parts of the evaluation loop are shown in Listing~\ref{lst:per_chunk}.
 
 \begin{code}
-\captionof{listing}{Per-chunk clause evaluation. Each mask word is read from DDR2 on demand inside the inner loop.}
+\captionof{listing}{Per-chunk clause evaluation (simplified). Each mask word is read from DDR2 on demand inside the inner loop.}
 \label{lst:per_chunk}
 \begin{minted}{c}
 
@@ -62,7 +62,7 @@ This strategy keeps DMEM usage minimal, as only the input sample and a small amo
 In the per-class strategy, the entire set of model words for one class is copied from DDR2 into a buffer in DMEM before that class is evaluated. The clause evaluation loop then reads exclusively from this on-chip buffer, performing no DDR2 accesses during evaluation. A simplified preload and evaluation loop are shown in Listing~\ref{lst:per_class}.
 
 \begin{code}
-\captionof{listing}{Per-class strategy. One full class is copied into a DMEM 
+\captionof{listing}{Per-class strategy (simplified). One full class is copied into a DMEM 
 buffer, after which clause evaluation reads only from on-chip memory.}
 \label{lst:per_class}
 \begin{minted}{c}
@@ -89,7 +89,7 @@ for (int j = 0; j < CLAUSES; j++) {
 \end{minted}
 \end{code}
 
-One class consists of $2000 \times 50 = 100\,000$ words, or 400 KB. Storing a full class in DMEM therefore requires the DMEM to be expanded beyond the default size of 8 KB. The DMEM was expanded to 512 KB to accommodate the class buffer together with the program's other data. This expansion triggers a Vivado design rule error (REQP-1962) which hindered the design from being implemented. However by manually ignoring this design rule in the constraint file of the project the design was implemented and uploaded to the FPGA, and no functionality was seemingly affected. \textcolor{red}{SOURCE NEEDED}
+One class consists of $2000 \times 50 = 100\,000$ words, or 400 KB. Storing a full class in DMEM therefore requires the DMEM to be expanded beyond the default size of 8 KB. The DMEM was expanded to 512 KB to accommodate the class buffer together with the program's other data. This expansion triggers a Vivado design rule error (REQP-1962) which hindered the design from being implemented \cite{amd_community_reqp1962}. However by manually ignoring this design rule in the constraint file of the project the design was implemented and uploaded to the FPGA, and no functionality was seemingly affected.
 
 The motivation for this strategy is to avoid the many small, slower DDR2 reads performed by the per-chunk strategy, hopefully bettering overall performance. Instead of reading individual mask words from DDR2 throughout evaluation, the per-class strategy moves all of the data for a class in one larger transfer, after which evaluation runs entirely from fast on-chip memory.
 

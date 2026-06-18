@@ -1,4 +1,4 @@
-This chapter presents the measured performance obtained from the baseline and CFU-accelerated TM inference implementations on the NEORV32 RISC-V processor. The central question is whether the clause evaluation speedup reported for the NoisyXOR problem in the preceding project thesis \textcolor{red}{cite deg sjæl} carries over to MNIST, where the model is too large for on-chip memory and must reside in off-chip DDR2 SDRAM. Accuracy is reported first to confirm that correctness is preserved, after which the measurements isolate the effect of model placement and of the custom instructions on inference time.
+This chapter presents the measured performance obtained from the baseline and CFU-accelerated TM inference implementations on the NEORV32 RISC-V processor. The central question is whether the clause evaluation speedup reported for the NoisyXOR problem in the preceding project thesis \cite{JB2025} carries over to MNIST, where the model is too large for on-chip memory and must reside in off-chip DDR2 SDRAM. Accuracy is reported first to confirm that correctness is preserved, after which the measurements isolate the effect of model placement and of the custom instructions on inference time.
 
 \section{Experimental Configuration}
 \label{sec:results_experimental}
@@ -8,11 +8,11 @@ All measurements were obtained on a Nexys A7 board with a Xilinx Artix-7 100T FP
 Three inference implementations were evaluated:
 
 \begin{itemize}
-    \item Baseline software, performing clause evaluation with standard RISC-V
+    \item Baseline software (Section \ref{sec:inference_pipeline}), performing clause evaluation with standard RISC-V
     instructions.
-    \item CFU Design 1, offloading the evaluation of a single chunk to a
+    \item CFU Design 1 (Section \ref{sec:cfu_design1}), offloading the evaluation of a single chunk to a
     combinational custom instruction.
-    \item CFU Design 2, offloading the full class scoring pipeline to a multiple stateful custom instructions.
+    \item CFU Design 2 (Section \ref{sec:cfu_design2}), offloading the full class scoring pipeline to a multiple stateful custom instructions.
 \end{itemize}
 
 Each implementation was evaluated under both load strategies described in Section~\ref{sec:inference_pipeline}: the per-chunk strategy, which reads model words directly from DDR2 using the default 8 KB DMEM, and the per-class strategy, which preloads one class into a 512 KB DMEM buffer before evaluation. This gives a total of six configurations to be evaluated.
@@ -75,9 +75,7 @@ Per-class (512 KB DMEM) & 780.71 & 80.32 & 861.05 \\ \hline
 \label{fig:load_strategy_persample}
 \end{figure}
 
-\textcolor{red}{sjekk at du har forklart early-exit bra nok tidligere}
-
-The two strategies place the model data in different memories, resulting in different performance results, shown per sample in Figure \ref{fig:load_strategy_persample}. In the per-chunk strategy, each clause word is read from DDR2 at the moment it is needed during evaluation. The early exit means that most clauses are rejected after their first non-empty chunk, so only a small fraction of the model is read for any given inference. Despite this, the average inference takes 328.96 ms, as every word access pays the latency of a DDR2 read.
+The two strategies place the model data in different memories, resulting in different performance results, shown per sample in Figure \ref{fig:load_strategy_persample}. In the per-chunk strategy, each clause word is read from DDR2 at the moment it is needed during evaluation. The early exit (Section \ref{sec:tm_inference}) means that most clauses are rejected after their first non-empty chunk, so only a small fraction of the model is read for any given inference. Despite this, the average inference takes 328.96 ms, as every word access pays the latency of a DDR2 read.
 
 The per-class strategy removes the DDR2 reads from the evaluation loop by preloading an entire class into DMEM before scoring it. Once model data is on-chip, scoring is relatively fast, with clause evaluation accounts for only 80.32 ms, approximately a quarter of the per-chunk inference time. The preload however costs 780.71 ms, meaning total inference time rises to 861.05 ms. By not including DDR2 reads in the evaluation loop, the per-class strategy also loses the possibilty for early exit of clauses, meaning every clause must be read in its entirety, resulting a higher amount of total DDR2 reads compared to the per-chunk strategy.
 
@@ -160,15 +158,13 @@ Subsystem total         & 5726 & 6415   & 0       \\ \hline
 \end{tabular}
 \end{table}
 
-\textcolor{red}{skriv ferdig beskrivelse av tabellene her når du gidder å lage de manglende designene på nytt, spesielt CFU Design 1 beskrivelsene}
 
-From Table \ref{tab:res_processor} we can see that the addition of custom instruction adds little logic to the processor. With a 8 KB DMEM size, CFU Design 2 uses 1942 LUTs and 1519 flip-flops against the 1885 LUTs and 1496 flip-flops of the baseline implementation, an increase of 57 LUTs and 23 flip-flops. \textcolor{red}{skriv noe tilsvarende om CFU design 1}. 
+From Table \ref{tab:res_processor} we can see that the addition of custom instruction adds little logic to the processor. With a 8 KB DMEM size, CFU Design 2 uses 1942 LUTs and 1519 flip-flops against the 1885 LUTs and 1496 flip-flops of the baseline implementation, an increase of 57 LUTs and 23 flip-flops. CFU Design 1 surprisingly uses 5 less LUTs than the baseline, and only 3 more flip-flops when it has 8 KB DMEM. This is most likely an anomaly, as a similar CFU design in the preceding thesis \cite{JB2025} reported an increase of 18 LUTs and 3 flip-flops compared to its baseline. 
 
 Increasing the DMEM size to 512 KB on the other hand has a larger effect on logic than the addition of custom instructions has. For the baseline implementation, increasing the DMEM size from 8 KB to 512 KB raises the amount of LUTs from 1885 to 2058, which is an increase of 173, which exceeds the amount added by the introduction of the CFU.  This is due to the fact that the 512 KB DMEM is too large to be held entirely in block RAM, so part of it is implemented as LUTs.
 
 The DDR2 memory subsystem takes up the majority of the logic usage of the complete design, totaling 5726 LUTs, which is more than twice the amount of LUTs of the processor, no matter the configuration. The complete design, with both the processor and the memory subsystem, uses around 12\% of the LUTs and 6\% of the flips-flops available as shown in Table \ref{tab:res_total}, depending on the processor configuration. Block RAM, on the other hand, is fully consumed in the configurations needing 512KB DMEM. No DSP slices are used in any configuration, as clause evaluation relies only on bitwise and integer operations, as described in Section~\ref{sec:tm_inference}. In other words, block RAM is the limiting factor, which is why the model needs to reside off-chip in DDR2 and Flash memory. 
 
-\textcolor{red}{dobbeltsjekk at du gidder å ha med denne, kan bli overflødig}
 
 The total resource utilization for the complete system in every configuration is shown in Table \ref{tab:res_total}
 

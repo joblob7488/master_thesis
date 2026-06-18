@@ -4,9 +4,9 @@
 \subsection{NEORV32 Instantiation on Nexys A7}
 \label{sec:neorv32_instantiation}
 
-The NEORV32 processor was implemented on the Nexys A7 board using Vivado, and configured through VHDL generics in accordance with the NEORV32 user guide \textcolor{red}{cite neorv32 user guide}. The system clock frequency was set to 100 MHz, provided by a Clocking Wizard IP core. In addition to the baseline configuration described Section~\ref{sec:neorv32_arch}, the M and Zicntr extension were added, providing access to integer multiplication and division, and hardware performance counters. The modules used were the CFU, to support custom instructions, UART0 to communicate with a host PC, SPI to control Flash memory, and GPIO for debugging.
+The NEORV32 processor was implemented on the Nexys A7 board using Vivado, and configured through VHDL generics in accordance with the NEORV32 user guide \cite{Nolting2024UserGuide}. The system clock frequency was set to 100 MHz, provided by a Clocking Wizard IP core. In addition to the baseline configuration described Section~\ref{sec:neorv32_arch}, the M and Zicntr extension were added, providing access to integer multiplication and division, and hardware performance counters. The modules used were the CFU, to support custom instructions, UART0 to communicate with a host PC, SPI to control Flash memory, and GPIO for debugging.
 
-To be able to run programs, the NEORV32 supports three boot configurations: booting from the internal bootloader, booting from a custom address in BOOTROM, and booting directly from a pre-compiled image stored in IMEM. Initially, the processor was configured to boot from IMEM, which allowed programs to be loaded at synthesis time. This however requires resynthesis every time a new program is to be ran. After the processor was repackaged as a Vivado IP block to enable communication with the on-board DRAM (explained in Section \ref{sec:ddr2_integration}), this approach became impractical as changes to the image in IMEM required repackaging of the IP, as well as synthesis time being too time consuming after introducing the MIG (also explained in Section \ref{sec:ddr2_integration}). The boot configuration therefore changed to use the built-in NEORV32 bootloader, which can receive executables over UART.
+To be able to run programs, the NEORV32 supports three boot configurations: booting from the internal bootloader, booting from a custom address in BOOTROM, and booting directly from a pre-compiled image stored in IMEM \cite{Nolting2024UserGuide}. Initially, the processor was configured to boot from IMEM, which allowed programs to be loaded at synthesis time. This however requires resynthesis every time a new program is to be ran. After the processor was repackaged as a Vivado IP block to enable communication with the on-board DRAM (explained in Section \ref{sec:ddr2_integration}), this approach became impractical as changes to the image in IMEM required repackaging of the IP, as well as synthesis time being too time consuming after introducing the MIG (also explained in Section \ref{sec:ddr2_integration}). The boot configuration therefore changed to use the built-in NEORV32 bootloader, which can receive executables over UART.
 
 The NEORV32 repository provides a shell script which allows users to upload executables images over UART, however this script relies on functionality that is not available on Windows. A python script was written as replacement, which allows Windows users to upload executables using the same protocol as the shell script \textcolor{red}{ref appendix!}.
 
@@ -15,28 +15,28 @@ The NEORV32 repository provides a shell script which allows users to upload exec
 
 
 
-The Nexys A7 board includes 128MB of DDR2 SDRAM (Micron MT47H64M16HR-25:H). It is used as the primary storage of the TM model during runtime, as its has sufficient capacity to hold the full action bit plane, and provides faster access performance than the QSPI Flash. The DDR2 controller is created by using the Memory Interface Generator (MIG) 7 series IP provided by Xilinx \textcolor{red}{cite MIG user guide??}.
+The Nexys A7 board includes 128MB of DDR2 SDRAM (Micron MT47H64M16HR-25:H \cite{micron_mt47h64m16hr}). It is used as the primary storage of the TM model during runtime, as its has sufficient capacity to hold the full action bit plane, and provides faster access performance than the QSPI Flash. The DDR2 controller is created by using the Memory Interface Generator (MIG) 7 series IP provided by Xilinx \cite{amd_ug586_mis}.
 
-Initial attempts to configure the MIG followed a community guide for the Nexys 4 board \textcolor{red}{SOURCE NEEDED}, which provides a constraint file of pin selection for the DDR2 interface. This file however is missing the \texttt{ddr2\_addr[13]} pin assignment, which causes the design to fail. The issue was resolved by instead using the Digilent board files for the Nexys A7 \textcolor{red}{SOURCE NEEDED}, which provide a complete and validated MIG configuration. By selecting Nexys A7 as the target board when creating the Vivado project, an entity called \texttt{DDR2 SDRAM} can be found in the Board window in Vivado Block Designer. By dragging this entity into a block design, Vivado automatically generates and configures the MIG with the correct pin assignments and timing constraints.
+Initial attempts to configure the MIG followed a community guide for the Nexys 4 board \cite{digilent_sram_to_ddr,chrispville_migexample}, which provides a constraint file of pin selection for the DDR2 interface. This file however is missing the \texttt{ddr2\_addr[13]} pin assignment, which causes the design to fail \cite{digilentforum_missingpin}. The issue was resolved by instead using the Digilent board files for the Nexys A7, which provide a complete and validated MIG configuration \cite{digilentforum_missingpin}. By selecting Nexys A7 as the target board when creating the Vivado project, an entity called \texttt{DDR2 SDRAM} can be found in the Board window in Vivado Block Designer. By dragging this entity into a block design, Vivado automatically generates and configures the MIG with the correct pin assignments and timing constraints.
 
-When synthezising the MIG, a build problem was encountered which was most likely caused by Windows' 260-character path length limit. This problem was resolved by launching Vivado in a temporary directory with a shorter character length, by using the TCL console command \texttt{vivado -tempDir c:/temp} before opening the project \textcolor{red}{SOURCE NEEDED}.
+When synthezising the MIG, a build problem was encountered which was most likely caused by Windows' 260-character path length limit. This problem was resolved by launching Vivado in a temporary directory with a shorter character length, by using the TCL console command \texttt{vivado -tempDir c:/temp} before opening the project \cite{amd_ar52787_longpath}.
 
-The MIG is connected to the NEORV32 XBUS through a Wishbone-to-AXI4 bridge, and an AXI interconnect IP block. When implementing the NEORV32 processor as an IP block, the Wishbone-to-AXI4 bridge is automatically provided \textcolor{red}{cite user guide NEORV32}. The DDR2 is mapped at address \texttt{0x88000000} in the address space of the NEORV32 processor.
+The MIG is connected to the NEORV32 XBUS through a Wishbone-to-AXI4 bridge, and an AXI interconnect IP block. When implementing the NEORV32 processor as an IP block, the Wishbone-to-AXI4 bridge is automatically provided \cite{Nolting2024UserGuide}. The DDR2 is mapped at address \texttt{0x88000000} in the address space of the NEORV32 processor.
 
 
 \subsection{QSPI Flash Integration}
 \label{sec:qspi_integration}
 
-For persistent storage of the trained TM model, the on-board 16 MB Spansion S25FL127S QSPI Flash device is used. It is accessed through the SPI module on the NEORV32 processor. The SPI module cannot operate in Quad or Double SPI, so the Flash is used in standard Flash mode. The Artix-7 100T FPGA is connected to the QSPI Flash as shown in Figure \ref{fig:flash_conn}.
+For persistent storage of the trained TM model, the on-board 16 MB Spansion S25FL127S QSPI Flash device is used \cite{infineon_s25fl127s}. It is accessed through the SPI module on the NEORV32 processor. The SPI module cannot operate in Quad or Double SPI, so the Flash is used in standard Flash mode. The Artix-7 100T FPGA is connected to the QSPI Flash as shown in Figure \ref{fig:flash_conn}.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width =0.8\textwidth]{Figures/flash_connect.png}
-    \caption{\textcolor{red}{skriv figtekst her, forklar kort hva CS, SDI, SDO og SCLK står for}}
+    \caption{Connection between Artix-7 and the on-board Flash device \cite{digilent_nexysa7}. L13 is CS, K17 is MOSI, K18 is MISO, and E9 is SCLK, as described in Section \ref{sec:flash}.}
     \label{fig:flash_conn}
 \end{figure}
 
-On Xilinx 7 Series devices, the E9 pin (CCLK), used as the serial clock on the QSPI Flash, is shared with the FPGA configuration logic. This means it cannot be used as a standard output pin after the bitstream has been loaded. If this is not handled, the serial clock never reaches the Flash, resulting in all SPI communication failing. This is resolved by routing the serial clock through the \texttt{STARTUPE2} primitive, which provides access to the E9 pin after configuration. A small RTL wrapper was created to instantiate the \texttt{STARTUPE2} primitive and connect it to the NEORV32 SPI clock, as shown in Figure \ref{fig:sys_arch}.
+On Xilinx 7 Series devices, the E9 pin (CCLK), used as the serial clock on the QSPI Flash, is shared with the FPGA configuration logic. This means it cannot be used as a standard output pin after the bitstream has been loaded. If this is not handled, the serial clock never reaches the Flash, resulting in all SPI communication failing. This is resolved by routing the serial clock through the \texttt{STARTUPE2} primitive \cite{amd_ug953_libraries,amd_ug470_config}, which provides access to the E9 pin after configuration. A small RTL wrapper was created to instantiate the \texttt{STARTUPE2} primitive and connect it to the NEORV32 SPI clock, as shown in Figure \ref{fig:sys_arch}.
 
 \subsection{Software Build Configuration}
 \label{sec:sw_build}
@@ -48,7 +48,7 @@ through linker flags to match the configured IMEM and DMEM sizes. All three
 inference implementations were compiled with identical toolchain versions and
 optimization flags to ensure a fair performance comparison. 
 
-The commands for compiling the programs depend on what boot mode the processor is in at the time. When the processor is set to load a program image from IMEM at boot, the command in Listing \ref{lst:boot_imem} is used, while when the processor used the built-in bootloader the command in Listing \ref{lst:bootloader} is used.
+The commands for compiling the programs depend on what boot mode the processor is in at the time. When the processor is set to load a program image from IMEM at boot, the command in Listing \ref{lst:boot_imem} is used, while when the processor used the built-in bootloader the command in Listing \ref{lst:bootloader} is used \cite{Nolting2024UserGuide}.
 
 \begin{code}
 \centering

@@ -19,7 +19,7 @@ To transfer the model to the NEORV32, a host PC runs a Python script that coordi
     \item The host sends 4 bytes containing the model size.
     \item The NEORV32 erases the Flash sectors required to store the model, with each sector being 64 KB, and sends an acknowledgement (ACK) byte when the erasure is complete.
     \item The host starts sending the model in chunks of 4096 bytes, small enough to safely be stored in the 8 KB DMEM of the NEORV32. The host waits for an ACK before sending the next chunk.
-    \item Upon receiving a chunk, the NEORV32 writes it to Flash as 16 consecutive 256-byte pages, using the standard page program command (\textcolor{red}{cite flash datasheet}), and sends an ACK once it has completed the write operation.
+    \item Upon receiving a chunk, the NEORV32 writes it to Flash as 16 consecutive 256-byte pages, using the standard page program command (\cite{infineon_s25fl127s}), and sends an ACK once it has completed the write operation.
     \item Step 3. and 4. are repeated until the entire model has been transferred. 
 \end{enumerate}
 
@@ -30,4 +30,4 @@ A negative acknowledgement (NAK) byte is sent if at any point a fatal error is d
 
 At the start of each inference program, the full model is transferred from Flash into DDR2 SDRAM before any inference takes place. The transfer is always performed in full, as DDR2 is volatile and does not retain data between power cycles.
 
-The program first polls GPIO input pin 0, which is connected to the \texttt{init\_calib\_complete} output of the MIG controller, and waits until DDR2 calibration is confirmed before proceeding. The model is then read from Flash and written to DDR2 starting at the base address \texttt{0x88000000}. The transfer uses a 4096-byte intermediate buffer. Each iteration reads one buffer of data from Flash using the sequential read command (\textcolor{red}{cite flash datasheet}), reassembles the bytes into 32-bit words in little-endian order, and writes them word by word to DDR2 through the XBUS interface. The transfer continues until all \texttt{TOTAL\_MODEL\_BYTES} have been copied.
+The program first polls GPIO input pin 0, which is connected to the \texttt{init\_calib\_complete} output of the MIG controller, and waits until DDR2 calibration is confirmed before proceeding. The model is then read from Flash and written to DDR2 starting at the base address \texttt{0x88000000}. The transfer uses a 4096-byte intermediate buffer. Each iteration reads one buffer of data from Flash using the sequential read command (\cite{infineon_s25fl127s}), reassembles the bytes into 32-bit words in little-endian order, and writes them word by word to DDR2 through the XBUS interface. The transfer continues until all \texttt{TOTAL\_MODEL\_BYTES} have been copied.

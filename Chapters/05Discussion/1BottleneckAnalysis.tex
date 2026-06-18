@@ -4,7 +4,7 @@
 \section{Bottleneck Analysis}
 \label{sec:disc_bottleneck}
 
-From the results presented in the previous chapter we see that, at the scale of the MNIST model, inference time is mostly dominated by the movement of data from external DDR2 memory to internal DMEM, rather than by computing clause evaluation itself. This section examines this result.
+From the results presented in the previous chapter we see that, at the scale of the MNIST model, inference time is mostly dominated by the movement of data from external DDR2 memory to internal data memory (DMEM), rather than by computing clause evaluation itself. This section examines this result.
 
 As seen in Table \ref{tab:results_loadstrategy}, for the per-class baseline software configuration, the preload of the model into DMEM accounts for 780.71 ms of the 861.05 ms total inference time, or approximately 91\%. The clause scoring on the other hand, executed from on-chip memory, contributes only 80.32 ms. The preload transfers the full model of 4\,000\,000 bytes from DDR2 once per inference, giving a transfer rate of 
 
@@ -14,7 +14,21 @@ As seen in Table \ref{tab:results_loadstrategy}, for the per-class baseline soft
     \label{eq:eff_bandwidth}
 \end{equation}
 
-This rate is far below the data rate the DDR2 SDRAM is capable of sustaining. The DDR2 SDRAM component provided by the Nexys A7 board has a maximum data rate of 667 MT/s (mega transfers per second), and a data width of 16 bits, amounting to approximately 1.33 GB/s \textcolor{red}{cite ddr2 datasheet}. This means the preload only achieves around 0.4\% of the peak transfer rate, indicating that the DDR2 component itself is not the limiting factor. This discrepancy is likely instead caused by how words are read from DDR2 across the XBUS one 32-bit word at a time, meaning each read incurs the full latency overhead of an individual transaction. Both the XBUS and the DDR2 component support burst reads, which allows for a sequence of addresses to be transmitted in quick succession, as shown in Figure \textcolor{red}{legg inn fig, og cite data sheet til neorv32 for burst read}. By enabling burst reads, the many sequential DDR2 reads in the preload could likely be done a lot faster than what is currently achieved.
+This rate is far below the data rate the DDR2 SDRAM is capable of sustaining. The DDR2 SDRAM component provided by the Nexys A7 board has a maximum data rate of 667 MT/s (mega transfers per second), and a data width of 16 bits, amounting to approximately 1.33 GB/s \cite{micron_mt47h64m16hr}. This means the preload only achieves around 0.4\% of the peak transfer rate, indicating that the DDR2 component itself is not the limiting factor. This discrepancy is likely instead caused by how words are read from DDR2 across the XBUS one 32-bit word at a time, meaning each read incurs the full latency overhead of an individual transaction. Both the XBUS and the DDR2 component support burst reads, which allows for a sequence of addresses to be transmitted in quick succession, as shown in Figure \textcolor{red}{legg inn fig}\cite{micron_mt47h64m16hr,Nolting2024Datasheet}. By enabling burst reads, the many sequential DDR2 reads in the preload could likely be done a lot faster than what is currently achieved.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{Figures/single_read.png}
+\caption{Per-sample inference time for the baseline implementation under the two load strategies. (a) The per-chunk strategy completes each inference in 329 ms on average. (b) The per-class strategy is dominated by the constant 781 ms model preload, while clause scoring adds only 80 ms, giving a total of 861 ms.}
+\label{fig:load_strategy_persample}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{Figures/burst_read.png}
+\caption{Per-sample inference time for the baseline implementation under the two load strategies. (a) The per-chunk strategy completes each inference in 329 ms on average. (b) The per-class strategy is dominated by the constant 781 ms model preload, while clause scoring adds only 80 ms, giving a total of 861 ms.}
+\label{fig:load_strategy_persample}
+\end{figure}
 
 \textcolor{red}{legg inn figuren som viser xbus burst reads fra datasheet}
 
@@ -24,4 +38,4 @@ As explained in Section \ref{sec:per_chunk}, the per-chunk strategy accesses mod
 It is worth noting that the per-chunk total is in fact lower than the per-class total by a factor of roughly 2.6, even though the per-class strategy was introduced to reduce DDR2 traffic. The per-class strategy forfeits the early exit, since it must copy every clause of a class into DMEM before any evaluation begins, and therefore moves the entire 4 MB model unconditionally on every inference. The per-chunk strategy moves only the portion of the model that the early exit does not skip. Neither strategy, however, escapes the fundamental cost of transporting the model out of DDR2. The per-chunk strategy pays it as scattered reads whose cost is dominated by access latency during evaluation, and the per-class strategy pays it as a single bulk preload dominated by transaction overhead. Both strategies are therefore memory-bound.
 
 
-This result reframes the central question of the thesis. In the preceding project thesis \textcolor{red}{cite deg selv}, the NoisyXOR model was small enough to reside entirely in on-chip DMEM, so no comparable data movement cost existed and clause evaluation was the dominant component of inference time. At that scale the workload was compute-bound, and accelerating clause evaluation through a custom instruction yielded a 4.42$\times$ speedup. At MNIST scale the model is roughly 8000$\times$ larger and cannot be held on-chip, which shifts the dominant cost from clause evaluation to memory transfer. The bottleneck is therefore not fixed by the algorithm but moves with the scale of the model, and at a realistic problem size it is the memory hierarchy, rather than the arithmetic, that limits performance. The implications of this shift for the effectiveness of the custom instructions are examined in the next section.
+This result reframes the central question of the thesis. In the preceding project thesis \cite{JB2025}, the NoisyXOR model was small enough to reside entirely in on-chip DMEM, so no comparable data movement cost existed and clause evaluation was the dominant component of inference time. At that scale the workload was compute-bound, and accelerating clause evaluation through a custom instruction yielded a 4.42$\times$ speedup. At MNIST scale the model is roughly 8000$\times$ larger and cannot be held on-chip, which shifts the dominant cost from clause evaluation to memory transfer. The bottleneck is therefore not fixed by the algorithm but moves with the scale of the model, and at a realistic problem size it is the memory hierarchy, rather than the arithmetic, that limits performance. The implications of this shift for the effectiveness of the custom instructions are examined in the next section.
