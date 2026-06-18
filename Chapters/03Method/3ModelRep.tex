@@ -30,7 +30,7 @@ The TM training algorithm relies on stochastic feedback, which is implemented us
 \subsection{Action Bit Plane Extraction}
 \label{sec:action_bit_plane}
 
-During training of the TM, the full model is stored, including TA states, meaning 8 bits per literal. As mentioned in Section \ref{sec:tm_ta}, only the action bit (include or exclude) of each literal, or the action bit plane, is needed to perform inference. While discarding the state bits hinders on-chip learning, this reduces model size by a factor of the number of TA states, or in this case 8. 
+During training of the TM, the full model is stored, including TA states, meaning~8 bits per literal. As mentioned in Section \ref{sec:tm_ta}, only the action bit (include or exclude) of each literal, or the action bit plane, is needed to perform inference. While discarding the state bits hinders on-chip learning, this reduces model size by a factor of the number of TA states, or in this case 8. 
 
 Custom functions were added to the training repository to extract the action bit plane and serialize it to a binary a binary file \textcolor{red}{cite appendix}. For each class and each clause, the function writes 25 positive literal words followed by 25 negative literal words, each word being a 32-bit unsigned integer.
 

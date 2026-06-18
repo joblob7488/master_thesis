@@ -4,7 +4,7 @@
 \section{Future Work}
 \label{sec:disc_futurework}
 
-The results of this work indicate that, at MNIST scale, TM inference on the NEORV32 is limited by the movement of model data rather than by clause evaluation. Based on these result, there are multiple different directions for future work to explore which might yield better performance benefits than the ones found here. Various different ideas for how these directions could be explored. The first direction is to target the memory bottleneck directly, by reducing the cost of transferring the model out of DDR2 (or possibly another type of external) or by widening the memory interface. The remaining directions look at workloads and platforms in which clause evaluation occupies a larger share of inference time, where processor-level acceleration like the CFU may remain worthwhile. Lastly on-chip training is discussed.
+The results of this work indicate that, at MNIST scale, TM inference on the NEORV32 core is limited by the movement of model data rather than by clause evaluation. Based on these result, there are multiple different directions for future work to explore which might yield better performance benefits than the ones found here. Various different ideas for how these directions could be explored. The first direction is to target the memory bottleneck directly, by reducing the cost of transferring the model out of DDR2 (or possibly another type of external) or by widening the memory interface. The remaining directions look at workloads and platforms in which clause evaluation occupies a larger share of inference time, where processor-level acceleration like the CFU may remain worthwhile. Lastly on-chip training is discussed.
 
 % -------------------------------------
 %   DDR2 burst transfers
