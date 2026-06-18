@@ -3,4 +3,2588 @@
 \chapter*{A - Github Repository}
 \addcontentsline{toc}{chapter}{\protect\numberline{}A - Github repository} 
 
-All code used in this document are included in the Github repository linked below. 
+All code used in this document are included in the Github repository linked below.
+ 
+\url{https://github.com/joblob7488/master_code.git}
+
+
+\chapter*{B - CFU Design 1 VHDL}
+\addcontentsline{toc}{chapter}{\protect\numberline{}B - CFU Design 1 VHDL} 
+\begin{minted}{vhdl}
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity neorv32_cpu_cp_cfu is
+  port (
+    -- global control --
+    clk_i    : in  std_ulogic; -- global clock, rising edge
+    rstn_i   : in  std_ulogic; -- global reset, low-active, async
+    -- operation control --
+    start_i  : in  std_ulogic; -- operation trigger/strobe
+    active_i : in  std_ulogic; -- operation in progress, CPU is waiting for CFU
+    -- operands (from/via custom instruction word) --
+    rtype_i  : in  std_ulogic; -- instruction type (0 = R3-type, 1 = R4-type); from instruction word's "opcode[5]" bit
+    funct3_i : in  std_ulogic_vector(2 downto 0); -- "funct3" bit-field from custom instruction word
+    funct7_i : in  std_ulogic_vector(6 downto 0); -- "funct7" bit-field from custom instruction word
+    rs1_i    : in  std_ulogic_vector(31 downto 0); -- rf source 1 via "rs1" bit-field from custom instruction word
+    rs2_i    : in  std_ulogic_vector(31 downto 0); -- rf source 2 via "rs2" bit-field from custom instruction word
+    rs3_i    : in  std_ulogic_vector(31 downto 0); -- rf source 3 via "rs3" bit-field from custom instruction word
+    -- result and status --
+    result_o : out std_ulogic_vector(31 downto 0); -- operation result
+    valid_o  : out std_ulogic -- result valid, operation done; set one cycle before result_o is valid
+  );
+end neorv32_cpu_cp_cfu;
+
+architecture neorv32_cpu_cp_cfu_rtl of neorv32_cpu_cp_cfu is
+
+  -- CFU instruction type formats --
+  constant r3type_c : std_ulogic := '0'; -- R3-type CFU instructions (custom-0 opcode)
+  constant r4type_c : std_ulogic := '1'; -- R4-type CFU instructions (custom-1 opcode)
+
+begin
+
+  result_select: process(rtype_i, funct3_i, rs1_i, rs2_i, rs3_i, start_i, active_i)
+    variable x_bits       : std_ulogic_vector(31 downto 0);
+    variable pos_mask     : std_ulogic_vector(31 downto 0);
+    variable neg_mask     : std_ulogic_vector(31 downto 0);
+    variable mismatch_pos : std_ulogic;
+    variable mismatch_neg : std_ulogic;
+    variable all_zero     : std_ulogic;
+    variable clause_out   : std_ulogic;
+    constant zero_vec     : std_ulogic_vector(31 downto 0) := (others => '0');
+  begin
+    -- default outputs
+    result_o <= (others => '0');
+    valid_o  <= '0';
+
+    if (rtype_i = r4type_c) then
+        case funct3_i is
+            when "000" => -- 32 bit clause eval
+                x_bits   := rs1_i(31 downto 0);
+                pos_mask := rs2_i(31 downto 0);
+                neg_mask := rs3_i(31 downto 0);
+                
+                if (pos_mask and (not x_bits)) /= zero_vec then
+                    mismatch_pos := '1';
+                else
+                    mismatch_pos := '0';
+                end if;
+          
+                if (neg_mask and x_bits) /= zero_vec then
+                    mismatch_neg := '1';
+                else
+                    mismatch_neg := '0';
+                end if;
+          
+                if (pos_mask or neg_mask) = zero_vec then
+                    all_zero := '1';
+                else
+                    all_zero := '0';
+                end if;
+
+                -- clause_out = 1 if no mismatch and not all_zero
+                if (mismatch_pos = '0' and mismatch_neg = '0' and all_zero = '0') then
+                    clause_out := '1';
+                else
+                    clause_out := '0';
+                end if;
+
+                result_o(0) <= clause_out;
+                result_o(1) <= all_zero;
+                valid_o     <= '1';  -- combinational, result ready immediately
+
+        when others =>
+          -- unsupported funct3: leave defaults (result=0, valid=0 -> illegal instr)
+          null;
+        end case;
+    end if;
+end process result_select;
+
+end neorv32_cpu_cp_cfu_rtl;
+
+\end{minted}
+
+
+\chapter*{C - CFU Design 2 VHDL }
+\addcontentsline{toc}{chapter}{\protect\numberline{}C - CFU Design 2 VHDL } 
+\begin{minted}{vhdl}
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity neorv32_cpu_cp_cfu is
+  port (
+    clk_i    : in  std_ulogic;
+    rstn_i   : in  std_ulogic;
+    start_i  : in  std_ulogic;
+    active_i : in  std_ulogic;
+    rtype_i  : in  std_ulogic;
+    funct3_i : in  std_ulogic_vector(2 downto 0);
+    funct7_i : in  std_ulogic_vector(6 downto 0);
+    rs1_i    : in  std_ulogic_vector(31 downto 0);
+    rs2_i    : in  std_ulogic_vector(31 downto 0);
+    rs3_i    : in  std_ulogic_vector(31 downto 0);
+    result_o : out std_ulogic_vector(31 downto 0);
+    valid_o  : out std_ulogic
+  );
+end neorv32_cpu_cp_cfu;
+
+architecture neorv32_cpu_cp_cfu_rtl of neorv32_cpu_cp_cfu is
+
+  constant r4type_c : std_ulogic := '1';
+
+  constant THRESHOLD : integer := 50;
+
+  signal clause_failed      : std_ulogic;               
+  signal clause_all_exclude : std_ulogic;               
+  signal class_sum          : signed(7 downto 0);       
+
+  signal valid_reg  : std_ulogic;
+  signal result_reg : std_ulogic_vector(31 downto 0);
+
+begin
+
+  result_o <= result_reg;
+  valid_o  <= valid_reg;
+
+  cfu_seq: process(clk_i, rstn_i)
+    variable x_bits      : std_ulogic_vector(31 downto 0);
+    variable pos_mask    : std_ulogic_vector(31 downto 0);
+    variable neg_mask    : std_ulogic_vector(31 downto 0);
+    variable mismatch    : std_ulogic;
+    variable all_zero    : std_ulogic;
+    variable vote        : signed(7 downto 0);
+    variable new_sum     : signed(7 downto 0);
+    constant zero_vec    : std_ulogic_vector(31 downto 0) := (others => '0');
+  begin
+    if rstn_i = '0' then
+      clause_failed      <= '0';
+      clause_all_exclude <= '1';
+      class_sum          <= (others => '0');
+      valid_reg          <= '0';
+      result_reg         <= (others => '0');
+
+    elsif rising_edge(clk_i) then
+      valid_reg  <= '0';
+      result_reg <= (others => '0');
+
+      if (start_i = '1') and (rtype_i = r4type_c) then
+        valid_reg <= '1';  -- all operations complete in one cycle
+
+        case funct3_i is
+
+          -- ----------------------------------------------------------------
+          -- funct3 = 000: CHUNK_EVAL
+          -- Update clause_failed and clause_all_exclude based on this chunk.
+          -- ----------------------------------------------------------------
+          when "000" =>
+            x_bits   := rs1_i;
+            pos_mask := rs2_i;
+            neg_mask := rs3_i;
+
+            if ((pos_mask and (not x_bits)) /= zero_vec) or
+               ((neg_mask and x_bits) /= zero_vec) then
+              mismatch := '1';
+            else
+              mismatch := '0';
+            end if;
+
+            if (pos_mask or neg_mask) = zero_vec then
+              all_zero := '1';
+            else
+              all_zero := '0';
+            end if;
+
+            if mismatch = '1' then
+              clause_failed <= '1';
+            end if;
+
+            if all_zero = '0' then
+              clause_all_exclude <= '0';
+            end if;
+
+            if (mismatch = '1') or (clause_failed = '1') then
+              result_reg(0) <= '1';
+            else
+              result_reg(0) <= '0';
+            end if;
+            result_reg(31 downto 1) <= (others => '0');
+
+          -- ----------------------------------------------------------------
+          -- funct3 = 001: CLAUSE_COMMIT
+          -- Finalize clause vote and add to class_sum.
+          -- rs1(0) = polarity: 0 = positive vote (+1), 1 = negative vote (-1)
+          -- ----------------------------------------------------------------
+          when "001" =>
+            if (clause_failed = '0') and (clause_all_exclude = '0') then
+              if rs1_i(0) = '0' then
+                vote := to_signed(1, 8);   -- even clause: +1
+              else
+                vote := to_signed(-1, 8);  -- odd clause:  -1
+              end if;
+
+              new_sum := class_sum + vote;
+
+              if new_sum > to_signed(THRESHOLD, 8) then
+                class_sum <= to_signed(THRESHOLD, 8);
+              elsif new_sum < to_signed(-THRESHOLD, 8) then
+                class_sum <= to_signed(-THRESHOLD, 8);
+              else
+                class_sum <= new_sum;
+              end if;
+            end if;
+
+            clause_failed      <= '0';
+            clause_all_exclude <= '1';
+
+            result_reg <= (others => '0');
+
+          -- ----------------------------------------------------------------
+          -- funct3 = 010: GET_SCORE
+          -- Return clamped class_sum and reset for next class.
+          -- ----------------------------------------------------------------
+          when "010" =>
+            
+            result_reg <= std_ulogic_vector(resize(class_sum, 32));
+
+            -- reset for next class
+            class_sum          <= (others => '0');
+            clause_failed      <= '0';
+            clause_all_exclude <= '1';
+
+          when others =>
+            null;
+
+        end case;
+      end if;
+    end if;
+  end process cfu_seq;
+
+end neorv32_cpu_cp_cfu_rtl;
+\end{minted}
+
+
+\chapter*{D - Non-CFU Per-Chunk Inference}
+\addcontentsline{toc}{chapter}{\protect\numberline{}D - Non-CFU Per-Chunk Inference} 
+\begin{minted}{c}
+#include <neorv32.h>
+#include <neorv32_spi.h>
+#include <stdint.h>
+
+// ---------------------------------------------------------------------------
+// Config
+// ---------------------------------------------------------------------------
+#define BAUD_RATE          921600
+
+#define DDR2_BASE          0x88000000UL
+
+#define SPI_PRSC           2
+#define SPI_CDIV           0
+#define FLASH_CS           0
+#define FLASH_PAGE_SIZE    256
+#define MODEL_FLASH_OFFSET 0x00100000UL
+#define COPY_BUF_WORDS     1024
+
+#define CMD_RDSR  0x05
+#define CMD_READ  0x03
+#define SR_WIP    0x01
+
+// TM parameters
+#define CLASSES          10
+#define CLAUSES          2000
+#define FEATURES         784
+#define THRESHOLD        50
+#define INT_SIZE         32
+#define LA_CHUNKS        50
+#define POS_CHUNKS       25
+
+#define WORDS_PER_CLAUSE  LA_CHUNKS
+#define WORDS_PER_CLASS   (CLAUSES * WORDS_PER_CLAUSE)
+#define TOTAL_MODEL_WORDS (CLASSES * WORDS_PER_CLASS)
+#define TOTAL_MODEL_BYTES (TOTAL_MODEL_WORDS * 4)
+
+// ---------------------------------------------------------------------------
+// Flash
+// ---------------------------------------------------------------------------
+static inline uint8_t flash_xfer(uint8_t tx)  { return neorv32_spi_transfer(tx); }
+static inline void    flash_cs_en(void)        { neorv32_spi_cs_en(FLASH_CS); }
+static inline void    flash_cs_dis(void)       { neorv32_spi_cs_dis(); }
+
+static void flash_send_addr(uint32_t addr) {
+    flash_xfer((uint8_t)(addr >> 16));
+    flash_xfer((uint8_t)(addr >>  8));
+    flash_xfer((uint8_t)(addr >>  0));
+}
+
+static void flash_read(uint32_t addr, uint8_t *buf, uint32_t len) {
+    flash_cs_en();
+    flash_xfer(CMD_READ);
+    flash_send_addr(addr);
+    for (uint32_t i = 0; i < len; i++) {
+        buf[i] = flash_xfer(0xFF);
+    }
+    flash_cs_dis();
+}
+
+// ---------------------------------------------------------------------------
+// DDR2
+// ---------------------------------------------------------------------------
+static inline void ddr2_write(uint32_t offset_words, uint32_t value) {
+    volatile uint32_t *ptr = (volatile uint32_t*)(DDR2_BASE + offset_words * 4);
+    *ptr = value;
+}
+
+static inline uint32_t ddr2_read(uint32_t offset_words) {
+    volatile uint32_t *ptr = (volatile uint32_t*)(DDR2_BASE + offset_words * 4);
+    return *ptr;
+}
+
+// ---------------------------------------------------------------------------
+// Flash -> DDR2 copy
+// ---------------------------------------------------------------------------
+static uint8_t copy_buf[COPY_BUF_WORDS * 4];
+
+static void load_model_to_ddr2(void) {
+    neorv32_uart0_printf("Loading model from flash to DDR2...\n");
+    neorv32_uart0_printf("  Flash offset : 0x%x\n", MODEL_FLASH_OFFSET);
+    neorv32_uart0_printf("  DDR2 base    : 0x%x\n", DDR2_BASE);
+    neorv32_uart0_printf("  Model size   : %u bytes\n", TOTAL_MODEL_BYTES);
+
+    uint32_t bytes_remaining = TOTAL_MODEL_BYTES;
+    uint32_t flash_addr      = MODEL_FLASH_OFFSET;
+    uint32_t ddr2_word_off   = 0;
+    uint32_t buf_bytes       = COPY_BUF_WORDS * 4;
+    uint32_t chunks_total    = (TOTAL_MODEL_BYTES + buf_bytes - 1) / buf_bytes;
+    uint32_t chunk_num       = 0;
+
+    while (bytes_remaining > 0) {
+        uint32_t chunk = (bytes_remaining >= buf_bytes) ? buf_bytes : bytes_remaining;
+
+        flash_read(flash_addr, copy_buf, chunk);
+
+        uint32_t words = chunk / 4;
+        for (uint32_t i = 0; i < words; i++) {
+            uint32_t word = (uint32_t)copy_buf[i*4 + 0]
+                          | ((uint32_t)copy_buf[i*4 + 1] <<  8)
+                          | ((uint32_t)copy_buf[i*4 + 2] << 16)
+                          | ((uint32_t)copy_buf[i*4 + 3] << 24);
+            ddr2_write(ddr2_word_off + i, word);
+        }
+
+        flash_addr      += chunk;
+        ddr2_word_off   += words;
+        bytes_remaining -= chunk;
+        chunk_num++;
+
+        if ((chunk_num % 64) == 0 || chunk_num == chunks_total) {
+            neorv32_uart0_printf("  %u / %u KB copied\n",
+                                 (chunk_num * buf_bytes) / 1024,
+                                 TOTAL_MODEL_BYTES / 1024);
+        }
+    }
+
+    neorv32_uart0_printf("Model loaded.\n\n");
+}
+
+// ---------------------------------------------------------------------------
+// TM inference
+// ---------------------------------------------------------------------------
+static inline uint32_t get_pos_action(int cls, int clause, int chunk) {
+    uint32_t offset = (uint32_t)cls    * WORDS_PER_CLASS
+                    + (uint32_t)clause * WORDS_PER_CLAUSE
+                    + (uint32_t)chunk;
+    return ddr2_read(offset);
+}
+
+static inline uint32_t get_neg_action(int cls, int clause, int chunk) {
+    uint32_t offset = (uint32_t)cls    * WORDS_PER_CLASS
+                    + (uint32_t)clause * WORDS_PER_CLAUSE
+                    + POS_CHUNKS
+                    + (uint32_t)chunk;
+    return ddr2_read(offset);
+}
+
+static int tm_score(int cls, uint32_t Xi[]) {
+    int class_sum = 0;
+
+    for (int j = 0; j < CLAUSES; j++) {
+        uint32_t output     = 1;
+        uint32_t all_exclude = 1;
+
+        for (int k = 0; k < POS_CHUNKS; k++) {
+            uint32_t pos = get_pos_action(cls, j, k);
+            uint32_t neg = get_neg_action(cls, j, k);
+
+            if ((pos | neg) == 0) continue;
+            all_exclude = 0;
+
+            if (pos & ~Xi[k]) { output = 0; break; }
+            if (neg &  Xi[k]) { output = 0; break; }
+        }
+
+        output = output && !all_exclude;
+
+        if (output) {
+            if ((j & 1) == 0) class_sum++;
+            else               class_sum--;
+        }
+    }
+
+    if (class_sum >  THRESHOLD) class_sum =  THRESHOLD;
+    if (class_sum < -THRESHOLD) class_sum = -THRESHOLD;
+
+    return class_sum;
+}
+
+static int predict(uint32_t Xi[]) {
+    int max_class     = 0;
+    int max_class_sum = tm_score(0, Xi);
+
+    for (int c = 1; c < CLASSES; c++) {
+        int s = tm_score(c, Xi);
+        if (s > max_class_sum) {
+            max_class_sum = s;
+            max_class     = c;
+        }
+    }
+
+    return max_class;
+}
+
+// ---------------------------------------------------------------------------
+// UART
+// ---------------------------------------------------------------------------
+static void uart_recv_bytes(uint8_t *buf, uint32_t n) {
+    for (uint32_t i = 0; i < n; i++) {
+        buf[i] = (uint8_t)neorv32_uart0_getc();
+    }
+}
+void delay_ms(uint32_t time_ms) {
+  neorv32_aux_delay_ms(neorv32_sysinfo_get_clk(), time_ms);
+}
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+int main(void) {
+
+    neorv32_rte_setup();
+    neorv32_uart0_setup(BAUD_RATE, 0);
+
+    if (!neorv32_uart0_available()) { return 1; }
+    if (!neorv32_spi_available()) {
+        neorv32_uart0_printf("ERROR: No SPI unit.\n");
+        return 1;
+    }
+    delay_ms(15000);
+    neorv32_uart0_printf("\n=== TM Inference Benchmark (Non-CFU) ===\n");
+    neorv32_uart0_printf("Classes  : %u\n", CLASSES);
+    neorv32_uart0_printf("Clauses  : %u per class\n", CLAUSES);
+    neorv32_uart0_printf("Features : %u\n", FEATURES);
+
+    neorv32_spi_setup(SPI_PRSC, SPI_CDIV, 0, 0);
+
+    // Wait for DDR2 calibration (init_calib_complete on gpio_i[0])
+    neorv32_uart0_printf("Waiting for DDR2 calibration...\n");
+    while (neorv32_gpio_pin_get(0) == 0) {}
+    neorv32_uart0_printf("DDR2 ready.\n");
+
+    load_model_to_ddr2();
+
+    uint8_t  raw_buf[POS_CHUNKS * 4];
+    uint32_t Xi[POS_CHUNKS];
+
+    neorv32_uart0_printf("Ready. Send %u bytes per image.\n\n", POS_CHUNKS * 4);
+
+    while (1) {
+        uart_recv_bytes(raw_buf, POS_CHUNKS * 4);
+
+        for (int k = 0; k < POS_CHUNKS; k++) {
+            Xi[k] = (uint32_t)raw_buf[k*4 + 0]
+                  | ((uint32_t)raw_buf[k*4 + 1] <<  8)
+                  | ((uint32_t)raw_buf[k*4 + 2] << 16)
+                  | ((uint32_t)raw_buf[k*4 + 3] << 24);
+        }
+
+        uint32_t t0   = neorv32_cpu_get_cycle();
+        int      pred = predict(Xi);
+        uint32_t t1   = neorv32_cpu_get_cycle();
+        uint32_t cycles = t1 - t0;
+
+        // Send raw prediction byte first
+        neorv32_uart0_putc((char)(pred + 1));  // +1 to avoid null byte for class 0
+
+        // Then send structured result line for logging
+        neorv32_uart0_printf("RESULT %u %d\n", cycles, pred);
+    }
+
+    return 0;
+}
+\end{minted}
+
+
+\chapter*{E - CFU Design 1 Per-Chunk Inference}
+\addcontentsline{toc}{chapter}{\protect\numberline{}E - CFU Design 1 Per-Chunk Inference} 
+\begin{minted}{c}
+#include <neorv32.h>
+#include <neorv32_spi.h>
+#include <stdint.h>
+
+// ---------------------------------------------------------------------------
+// Config
+// ---------------------------------------------------------------------------
+#define BAUD_RATE          921600
+
+#define DDR2_BASE          0x88000000UL
+
+#define SPI_PRSC           2
+#define SPI_CDIV           0
+#define FLASH_CS           0
+#define FLASH_PAGE_SIZE    256
+#define MODEL_FLASH_OFFSET 0x00100000UL
+#define COPY_BUF_WORDS     1024
+
+#define CMD_RDSR  0x05
+#define CMD_READ  0x03
+#define SR_WIP    0x01
+
+// TM parameters
+#define CLASSES          10
+#define CLAUSES          2000
+#define FEATURES         784
+#define THRESHOLD        50
+#define INT_SIZE         32
+#define LA_CHUNKS        50
+#define POS_CHUNKS       25
+
+#define WORDS_PER_CLAUSE  LA_CHUNKS
+#define WORDS_PER_CLASS   (CLAUSES * WORDS_PER_CLAUSE)
+#define TOTAL_MODEL_WORDS (CLASSES * WORDS_PER_CLASS)
+#define TOTAL_MODEL_BYTES (TOTAL_MODEL_WORDS * 4)
+
+// CFU
+#define TM_FUNCT3_CLAUSE  0b000
+
+#define TM_CFU_CLAUSE_EVAL(x_bits, pos_mask, neg_mask) \
+    neorv32_cfu_r4_instr(          \
+        TM_FUNCT3_CLAUSE,          \
+        (uint32_t)(x_bits),        \
+        (uint32_t)(pos_mask),      \
+        (uint32_t)(neg_mask)       \
+    )
+
+// ---------------------------------------------------------------------------
+// Flash
+// ---------------------------------------------------------------------------
+static inline uint8_t flash_xfer(uint8_t tx)  { return neorv32_spi_transfer(tx); }
+static inline void    flash_cs_en(void)        { neorv32_spi_cs_en(FLASH_CS); }
+static inline void    flash_cs_dis(void)       { neorv32_spi_cs_dis(); }
+
+static void flash_send_addr(uint32_t addr) {
+    flash_xfer((uint8_t)(addr >> 16));
+    flash_xfer((uint8_t)(addr >>  8));
+    flash_xfer((uint8_t)(addr >>  0));
+}
+
+static void flash_read(uint32_t addr, uint8_t *buf, uint32_t len) {
+    flash_cs_en();
+    flash_xfer(CMD_READ);
+    flash_send_addr(addr);
+    for (uint32_t i = 0; i < len; i++) {
+        buf[i] = flash_xfer(0xFF);
+    }
+    flash_cs_dis();
+}
+
+// ---------------------------------------------------------------------------
+// DDR2
+// ---------------------------------------------------------------------------
+static inline void ddr2_write(uint32_t offset_words, uint32_t value) {
+    volatile uint32_t *ptr = (volatile uint32_t*)(DDR2_BASE + offset_words * 4);
+    *ptr = value;
+}
+
+static inline uint32_t ddr2_read(uint32_t offset_words) {
+    volatile uint32_t *ptr = (volatile uint32_t*)(DDR2_BASE + offset_words * 4);
+    return *ptr;
+}
+
+// ---------------------------------------------------------------------------
+// Flash -> DDR2 copy
+// ---------------------------------------------------------------------------
+static uint8_t copy_buf[COPY_BUF_WORDS * 4];
+
+static void load_model_to_ddr2(void) {
+    neorv32_uart0_printf("Loading model from flash to DDR2...\n");
+    neorv32_uart0_printf("  Flash offset : 0x%x\n", MODEL_FLASH_OFFSET);
+    neorv32_uart0_printf("  DDR2 base    : 0x%x\n", DDR2_BASE);
+    neorv32_uart0_printf("  Model size   : %u bytes\n", TOTAL_MODEL_BYTES);
+
+    uint32_t bytes_remaining = TOTAL_MODEL_BYTES;
+    uint32_t flash_addr      = MODEL_FLASH_OFFSET;
+    uint32_t ddr2_word_off   = 0;
+    uint32_t buf_bytes       = COPY_BUF_WORDS * 4;
+    uint32_t chunks_total    = (TOTAL_MODEL_BYTES + buf_bytes - 1) / buf_bytes;
+    uint32_t chunk_num       = 0;
+
+    while (bytes_remaining > 0) {
+        uint32_t chunk = (bytes_remaining >= buf_bytes) ? buf_bytes : bytes_remaining;
+
+        flash_read(flash_addr, copy_buf, chunk);
+
+        uint32_t words = chunk / 4;
+        for (uint32_t i = 0; i < words; i++) {
+            uint32_t word = (uint32_t)copy_buf[i*4 + 0]
+                          | ((uint32_t)copy_buf[i*4 + 1] <<  8)
+                          | ((uint32_t)copy_buf[i*4 + 2] << 16)
+                          | ((uint32_t)copy_buf[i*4 + 3] << 24);
+            ddr2_write(ddr2_word_off + i, word);
+        }
+
+        flash_addr      += chunk;
+        ddr2_word_off   += words;
+        bytes_remaining -= chunk;
+        chunk_num++;
+
+        if ((chunk_num % 64) == 0 || chunk_num == chunks_total) {
+            neorv32_uart0_printf("  %u / %u KB copied\n",
+                                 (chunk_num * buf_bytes) / 1024,
+                                 TOTAL_MODEL_BYTES / 1024);
+        }
+    }
+
+    neorv32_uart0_printf("Model loaded.\n\n");
+}
+
+// ---------------------------------------------------------------------------
+// TM inference (CFU)
+// ---------------------------------------------------------------------------
+static inline uint32_t get_pos_action(int cls, int clause, int chunk) {
+    uint32_t offset = (uint32_t)cls    * WORDS_PER_CLASS
+                    + (uint32_t)clause * WORDS_PER_CLAUSE
+                    + (uint32_t)chunk;
+    return ddr2_read(offset);
+}
+
+static inline uint32_t get_neg_action(int cls, int clause, int chunk) {
+    uint32_t offset = (uint32_t)cls    * WORDS_PER_CLASS
+                    + (uint32_t)clause * WORDS_PER_CLAUSE
+                    + POS_CHUNKS
+                    + (uint32_t)chunk;
+    return ddr2_read(offset);
+}
+
+static int tm_score(int cls, uint32_t Xi[]) {
+    int class_sum = 0;
+
+    for (int j = 0; j < CLAUSES; j++) {
+        uint32_t clause_out  = 1;
+        uint32_t all_exclude = 1;
+
+        for (int k = 0; k < POS_CHUNKS; k++) {
+            uint32_t pos = get_pos_action(cls, j, k);
+            uint32_t neg = get_neg_action(cls, j, k);
+
+            if ((pos | neg) == 0) continue;
+            all_exclude = 0;
+
+            uint32_t chunk_ok = TM_CFU_CLAUSE_EVAL(Xi[k], pos, neg);
+
+            if (!chunk_ok) {
+                clause_out = 0;
+                break;
+            }
+        }
+
+        clause_out = clause_out && !all_exclude;
+
+        if (clause_out) {
+            if ((j & 1) == 0) class_sum++;
+            else               class_sum--;
+        }
+    }
+
+    if (class_sum >  THRESHOLD) class_sum =  THRESHOLD;
+    if (class_sum < -THRESHOLD) class_sum = -THRESHOLD;
+
+    return class_sum;
+}
+
+static int predict(uint32_t Xi[]) {
+    int max_class     = 0;
+    int max_class_sum = tm_score(0, Xi);
+
+    for (int c = 1; c < CLASSES; c++) {
+        int s = tm_score(c, Xi);
+        if (s > max_class_sum) {
+            max_class_sum = s;
+            max_class     = c;
+        }
+    }
+
+    return max_class;
+}
+
+// ---------------------------------------------------------------------------
+// UART
+// ---------------------------------------------------------------------------
+static void uart_recv_bytes(uint8_t *buf, uint32_t n) {
+    for (uint32_t i = 0; i < n; i++) {
+        buf[i] = (uint8_t)neorv32_uart0_getc();
+    }
+}
+void delay_ms(uint32_t time_ms) {
+  neorv32_aux_delay_ms(neorv32_sysinfo_get_clk(), time_ms);
+}
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+int main(void) {
+
+    neorv32_rte_setup();
+    neorv32_uart0_setup(BAUD_RATE, 0);
+
+    if (!neorv32_uart0_available()) { return 1; }
+    if (!neorv32_spi_available()) {
+        neorv32_uart0_printf("ERROR: No SPI unit.\n");
+        return 1;
+    }
+    delay_ms(15000);
+    neorv32_uart0_printf("\n=== TM Inference Benchmark (CFU) ===\n");
+    neorv32_uart0_printf("Classes  : %u\n", CLASSES);
+    neorv32_uart0_printf("Clauses  : %u per class\n", CLAUSES);
+    neorv32_uart0_printf("Features : %u\n", FEATURES);
+
+    neorv32_spi_setup(SPI_PRSC, SPI_CDIV, 0, 0);
+
+    // Wait for DDR2 calibration (init_calib_complete on gpio_i[0])
+    neorv32_uart0_printf("Waiting for DDR2 calibration...\n");
+    while (neorv32_gpio_pin_get(0) == 0) {}
+    neorv32_uart0_printf("DDR2 ready.\n");
+
+    load_model_to_ddr2();
+
+    uint8_t  raw_buf[POS_CHUNKS * 4];
+    uint32_t Xi[POS_CHUNKS];
+
+    neorv32_uart0_printf("Ready. Send %u bytes per image.\n\n", POS_CHUNKS * 4);
+
+    while (1) {
+        uart_recv_bytes(raw_buf, POS_CHUNKS * 4);
+
+        for (int k = 0; k < POS_CHUNKS; k++) {
+            Xi[k] = (uint32_t)raw_buf[k*4 + 0]
+                  | ((uint32_t)raw_buf[k*4 + 1] <<  8)
+                  | ((uint32_t)raw_buf[k*4 + 2] << 16)
+                  | ((uint32_t)raw_buf[k*4 + 3] << 24);
+        }
+
+        uint32_t t0     = neorv32_cpu_get_cycle();
+        int      pred   = predict(Xi);
+        uint32_t t1     = neorv32_cpu_get_cycle();
+        uint32_t cycles = t1 - t0;
+
+        // Send raw prediction byte (pred+1 to avoid null byte for class 0)
+        neorv32_uart0_putc((char)(pred + 1));
+
+        // Send structured result line for logging
+        neorv32_uart0_printf("RESULT %u %d\n", cycles, pred);
+    }
+
+    return 0;
+}
+\end{minted}
+
+
+\chapter*{F - CFU Design 2 Per-Chunk Inference}
+\addcontentsline{toc}{chapter}{\protect\numberline{}F - CFU Design 2 Per-Chunk Inference} 
+\begin{minted}{c}
+#include <neorv32.h>
+#include <neorv32_spi.h>
+#include <stdint.h>
+
+// ---------------------------------------------------------------------------
+// Config
+// ---------------------------------------------------------------------------
+#define BAUD_RATE          921600
+
+#define DDR2_BASE          0x88000000UL
+
+#define SPI_PRSC           2
+#define SPI_CDIV           0
+#define FLASH_CS           0
+#define FLASH_PAGE_SIZE    256
+#define MODEL_FLASH_OFFSET 0x00100000UL
+#define COPY_BUF_WORDS     1024
+
+#define CMD_RDSR  0x05
+#define CMD_READ  0x03
+#define SR_WIP    0x01
+
+// TM parameters
+#define CLASSES          10
+#define CLAUSES          2000
+#define FEATURES         784
+#define THRESHOLD        50
+#define INT_SIZE         32
+#define LA_CHUNKS        50
+#define POS_CHUNKS       25
+
+#define WORDS_PER_CLAUSE  LA_CHUNKS
+#define WORDS_PER_CLASS   (CLAUSES * WORDS_PER_CLAUSE)
+#define TOTAL_MODEL_WORDS (CLASSES * WORDS_PER_CLASS)
+#define TOTAL_MODEL_BYTES (TOTAL_MODEL_WORDS * 4)
+
+// CFU
+#define TM_FUNCT3_CHUNK_EVAL    0b000
+#define TM_FUNCT3_CHUNK_EVAL_FAST 0b011
+#define TM_FUNCT3_CLAUSE_COMMIT 0b001
+#define TM_FUNCT3_GET_SCORE     0b010
+
+
+// CHUNK_EVAL: update internal clause state for one 32-bit chunk
+// result is ignored
+#define CFU_CHUNK_EVAL(x_bits, pos_mask, neg_mask) \
+    neorv32_cfu_r4_instr(          \
+        TM_FUNCT3_CHUNK_EVAL,      \
+        (uint32_t)(x_bits),        \
+        (uint32_t)(pos_mask),      \
+        (uint32_t)(neg_mask)       \
+    )
+
+// CLAUSE_COMMIT: finalize clause vote, pass clause index for polarity
+// result is ignored
+#define CFU_CLAUSE_COMMIT(clause_idx) \
+    neorv32_cfu_r4_instr(            \
+        TM_FUNCT3_CLAUSE_COMMIT,     \
+        (uint32_t)(clause_idx),      \
+        (uint32_t)0,                           \
+        (uint32_t)0                            \
+    )
+ 
+// GET_SCORE: return clamped class_sum and reset for next class
+#define CFU_GET_SCORE() \
+    (int32_t)neorv32_cfu_r4_instr( \
+        TM_FUNCT3_GET_SCORE,        \
+        (uint32_t)0,                          \
+        (uint32_t)0,                          \
+        (uint32_t)0                           \
+    )
+
+// ---------------------------------------------------------------------------
+// Flash
+// ---------------------------------------------------------------------------
+static inline uint8_t flash_xfer(uint8_t tx)  { return neorv32_spi_transfer(tx); }
+static inline void    flash_cs_en(void)        { neorv32_spi_cs_en(FLASH_CS); }
+static inline void    flash_cs_dis(void)       { neorv32_spi_cs_dis(); }
+
+static void flash_send_addr(uint32_t addr) {
+    flash_xfer((uint8_t)(addr >> 16));
+    flash_xfer((uint8_t)(addr >>  8));
+    flash_xfer((uint8_t)(addr >>  0));
+}
+
+static void flash_read(uint32_t addr, uint8_t *buf, uint32_t len) {
+    flash_cs_en();
+    flash_xfer(CMD_READ);
+    flash_send_addr(addr);
+    for (uint32_t i = 0; i < len; i++) {
+        buf[i] = flash_xfer(0xFF);
+    }
+    flash_cs_dis();
+}
+
+// ---------------------------------------------------------------------------
+// DDR2
+// ---------------------------------------------------------------------------
+static inline void ddr2_write(uint32_t offset_words, uint32_t value) {
+    volatile uint32_t *ptr = (volatile uint32_t*)(DDR2_BASE + offset_words * 4);
+    *ptr = value;
+}
+
+static inline uint32_t ddr2_read(uint32_t offset_words) {
+    volatile uint32_t *ptr = (volatile uint32_t*)(DDR2_BASE + offset_words * 4);
+    return *ptr;
+}
+
+// ---------------------------------------------------------------------------
+// Flash -> DDR2 copy
+// ---------------------------------------------------------------------------
+static uint8_t copy_buf[COPY_BUF_WORDS * 4];
+
+static void load_model_to_ddr2(void) {
+    neorv32_uart0_printf("Loading model from flash to DDR2...\n");
+    neorv32_uart0_printf("  Flash offset : 0x%x\n", MODEL_FLASH_OFFSET);
+    neorv32_uart0_printf("  DDR2 base    : 0x%x\n", DDR2_BASE);
+    neorv32_uart0_printf("  Model size   : %u bytes\n", TOTAL_MODEL_BYTES);
+
+    uint32_t bytes_remaining = TOTAL_MODEL_BYTES;
+    uint32_t flash_addr      = MODEL_FLASH_OFFSET;
+    uint32_t ddr2_word_off   = 0;
+    uint32_t buf_bytes       = COPY_BUF_WORDS * 4;
+    uint32_t chunks_total    = (TOTAL_MODEL_BYTES + buf_bytes - 1) / buf_bytes;
+    uint32_t chunk_num       = 0;
+
+    while (bytes_remaining > 0) {
+        uint32_t chunk = (bytes_remaining >= buf_bytes) ? buf_bytes : bytes_remaining;
+
+        flash_read(flash_addr, copy_buf, chunk);
+
+        uint32_t words = chunk / 4;
+        for (uint32_t i = 0; i < words; i++) {
+            uint32_t word = (uint32_t)copy_buf[i*4 + 0]
+                          | ((uint32_t)copy_buf[i*4 + 1] <<  8)
+                          | ((uint32_t)copy_buf[i*4 + 2] << 16)
+                          | ((uint32_t)copy_buf[i*4 + 3] << 24);
+            ddr2_write(ddr2_word_off + i, word);
+        }
+
+        flash_addr      += chunk;
+        ddr2_word_off   += words;
+        bytes_remaining -= chunk;
+        chunk_num++;
+
+        if ((chunk_num % 64) == 0 || chunk_num == chunks_total) {
+            neorv32_uart0_printf("  %u / %u KB copied\n",
+                                 (chunk_num * buf_bytes) / 1024,
+                                 TOTAL_MODEL_BYTES / 1024);
+        }
+    }
+
+    neorv32_uart0_printf("Model loaded.\n\n");
+}
+
+// ---------------------------------------------------------------------------
+// TM inference (CFU)
+// ---------------------------------------------------------------------------
+static inline uint32_t get_pos_action(int cls, int clause, int chunk) {
+    uint32_t offset = (uint32_t)cls    * WORDS_PER_CLASS
+                    + (uint32_t)clause * WORDS_PER_CLAUSE
+                    + (uint32_t)chunk;
+    return ddr2_read(offset);
+}
+
+static inline uint32_t get_neg_action(int cls, int clause, int chunk) {
+    uint32_t offset = (uint32_t)cls    * WORDS_PER_CLASS
+                    + (uint32_t)clause * WORDS_PER_CLAUSE
+                    + POS_CHUNKS
+                    + (uint32_t)chunk;
+    return ddr2_read(offset);
+}
+
+static int tm_score(int cls, uint32_t Xi[]) {
+
+    for (int j = 0; j < CLAUSES; j++) {
+
+        for (int k = 0; k < POS_CHUNKS; k++) {
+            uint32_t pos = get_pos_action(cls, j, k);
+            uint32_t neg = get_neg_action(cls, j, k);
+
+            if ((pos | neg) == 0) continue;
+            uint32_t chunk_ok = CFU_CHUNK_EVAL_FAST(Xi[k], pos, neg);
+            if (chunk_ok & 1) break;  // clause already failed, skip remaining chunks
+            
+        }
+
+        CFU_CLAUSE_COMMIT(j);
+    }
+
+    int class_sum = (int)CFU_GET_SCORE();
+
+    return class_sum;
+}
+
+static int predict(uint32_t Xi[]) {
+    int max_class     = 0;
+    int max_class_sum = tm_score(0, Xi);
+
+    for (int c = 1; c < CLASSES; c++) {
+        int s = tm_score(c, Xi);
+        if (s > max_class_sum) {
+            max_class_sum = s;
+            max_class     = c;
+        }
+    }
+
+    return max_class;
+}
+
+// ---------------------------------------------------------------------------
+// UART
+// ---------------------------------------------------------------------------
+static void uart_recv_bytes(uint8_t *buf, uint32_t n) {
+    for (uint32_t i = 0; i < n; i++) {
+        buf[i] = (uint8_t)neorv32_uart0_getc();
+    }
+}
+void delay_ms(uint32_t time_ms) {
+  neorv32_aux_delay_ms(neorv32_sysinfo_get_clk(), time_ms);
+}
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+int main(void) {
+
+    neorv32_rte_setup();
+    neorv32_uart0_setup(BAUD_RATE, 0);
+
+    if (!neorv32_uart0_available()) { return 1; }
+    if (!neorv32_spi_available()) {
+        neorv32_uart0_printf("ERROR: No SPI unit.\n");
+        return 1;
+    }
+    neorv32_uart0_printf("\n=== TM Inference Benchmark (CFU) ===\n");
+    neorv32_uart0_printf("Classes  : %u\n", CLASSES);
+    neorv32_uart0_printf("Clauses  : %u per class\n", CLAUSES);
+    neorv32_uart0_printf("Features : %u\n", FEATURES);
+
+    neorv32_spi_setup(SPI_PRSC, SPI_CDIV, 0, 0);
+
+    // Wait for DDR2 calibration (init_calib_complete on gpio_i[0])
+    neorv32_uart0_printf("Waiting for DDR2 calibration...\n");
+    while (neorv32_gpio_pin_get(0) == 0) {}
+    neorv32_uart0_printf("DDR2 ready.\n");
+
+    load_model_to_ddr2();
+
+    uint8_t  raw_buf[POS_CHUNKS * 4];
+    uint32_t Xi[POS_CHUNKS];
+
+    neorv32_uart0_printf("Ready. Send %u bytes per image.\n\n", POS_CHUNKS * 4);
+
+    while (1) {
+        uart_recv_bytes(raw_buf, POS_CHUNKS * 4);
+
+        for (int k = 0; k < POS_CHUNKS; k++) {
+            Xi[k] = (uint32_t)raw_buf[k*4 + 0]
+                  | ((uint32_t)raw_buf[k*4 + 1] <<  8)
+                  | ((uint32_t)raw_buf[k*4 + 2] << 16)
+                  | ((uint32_t)raw_buf[k*4 + 3] << 24);
+        }
+
+        uint32_t t0     = neorv32_cpu_get_cycle();
+        int      pred   = predict(Xi);
+        uint32_t t1     = neorv32_cpu_get_cycle();
+        uint32_t cycles = t1 - t0;
+
+        // Send raw prediction byte (pred+1 to avoid null byte for class 0)
+        neorv32_uart0_putc((char)(pred + 1));
+
+        // Send structured result line for logging
+        neorv32_uart0_printf("RESULT %u %d\n", cycles, pred);
+    }
+
+    return 0;
+}
+\end{minted}
+
+
+\chapter*{G - Non-CFU Per-Class Inference}
+\addcontentsline{toc}{chapter}{\protect\numberline{}G - Non-CFU Per-Class Inference} 
+\begin{minted}{c}
+#include <neorv32.h>
+#include <neorv32_spi.h>
+#include <stdint.h>
+
+// ---------------------------------------------------------------------------
+// Config
+// ---------------------------------------------------------------------------
+#define BAUD_RATE          921600
+
+#define DDR2_BASE          0x88000000UL
+
+#define SPI_PRSC           2
+#define SPI_CDIV           0
+#define FLASH_CS           0
+#define FLASH_PAGE_SIZE    256
+#define MODEL_FLASH_OFFSET 0x00100000UL
+#define COPY_BUF_WORDS     1024
+
+#define CMD_RDSR  0x05
+#define CMD_READ  0x03
+#define SR_WIP    0x01
+
+// TM parameters
+#define CLASSES          10
+#define CLAUSES          2000
+#define FEATURES         784
+#define THRESHOLD        50
+#define INT_SIZE         32
+#define LA_CHUNKS        50
+#define POS_CHUNKS       25
+
+#define WORDS_PER_CLAUSE  LA_CHUNKS
+#define WORDS_PER_CLASS   (CLAUSES * WORDS_PER_CLAUSE)   // 100000 words = 400000 bytes
+#define TOTAL_MODEL_WORDS (CLASSES * WORDS_PER_CLASS)
+#define TOTAL_MODEL_BYTES (TOTAL_MODEL_WORDS * 4)
+
+// ---------------------------------------------------------------------------
+// Flash
+// ---------------------------------------------------------------------------
+static inline uint8_t flash_xfer(uint8_t tx)  { return neorv32_spi_transfer(tx); }
+static inline void    flash_cs_en(void)        { neorv32_spi_cs_en(FLASH_CS); }
+static inline void    flash_cs_dis(void)       { neorv32_spi_cs_dis(); }
+
+static void flash_send_addr(uint32_t addr) {
+    flash_xfer((uint8_t)(addr >> 16));
+    flash_xfer((uint8_t)(addr >>  8));
+    flash_xfer((uint8_t)(addr >>  0));
+}
+
+static void flash_read(uint32_t addr, uint8_t *buf, uint32_t len) {
+    flash_cs_en();
+    flash_xfer(CMD_READ);
+    flash_send_addr(addr);
+    for (uint32_t i = 0; i < len; i++) {
+        buf[i] = flash_xfer(0xFF);
+    }
+    flash_cs_dis();
+}
+
+// ---------------------------------------------------------------------------
+// DDR2
+// ---------------------------------------------------------------------------
+static inline void ddr2_write(uint32_t offset_words, uint32_t value) {
+    volatile uint32_t *ptr = (volatile uint32_t*)(DDR2_BASE + offset_words * 4);
+    *ptr = value;
+}
+
+static inline uint32_t ddr2_read(uint32_t offset_words) {
+    volatile uint32_t *ptr = (volatile uint32_t*)(DDR2_BASE + offset_words * 4);
+    return *ptr;
+}
+
+// ---------------------------------------------------------------------------
+// Flash -> DDR2 copy
+// ---------------------------------------------------------------------------
+static uint8_t copy_buf[COPY_BUF_WORDS * 4];
+
+static void load_model_to_ddr2(void) {
+    neorv32_uart0_printf("Loading model from flash to DDR2...\n");
+    neorv32_uart0_printf("  Flash offset : 0x%x\n", MODEL_FLASH_OFFSET);
+    neorv32_uart0_printf("  DDR2 base    : 0x%x\n", DDR2_BASE);
+    neorv32_uart0_printf("  Model size   : %u bytes\n", TOTAL_MODEL_BYTES);
+
+    uint32_t bytes_remaining = TOTAL_MODEL_BYTES;
+    uint32_t flash_addr      = MODEL_FLASH_OFFSET;
+    uint32_t ddr2_word_off   = 0;
+    uint32_t buf_bytes       = COPY_BUF_WORDS * 4;
+    uint32_t chunks_total    = (TOTAL_MODEL_BYTES + buf_bytes - 1) / buf_bytes;
+    uint32_t chunk_num       = 0;
+
+    while (bytes_remaining > 0) {
+        uint32_t chunk = (bytes_remaining >= buf_bytes) ? buf_bytes : bytes_remaining;
+
+        flash_read(flash_addr, copy_buf, chunk);
+
+        uint32_t words = chunk / 4;
+        for (uint32_t i = 0; i < words; i++) {
+            uint32_t word = (uint32_t)copy_buf[i*4 + 0]
+                          | ((uint32_t)copy_buf[i*4 + 1] <<  8)
+                          | ((uint32_t)copy_buf[i*4 + 2] << 16)
+                          | ((uint32_t)copy_buf[i*4 + 3] << 24);
+            ddr2_write(ddr2_word_off + i, word);
+        }
+
+        flash_addr      += chunk;
+        ddr2_word_off   += words;
+        bytes_remaining -= chunk;
+        chunk_num++;
+
+        if ((chunk_num % 64) == 0 || chunk_num == chunks_total) {
+            neorv32_uart0_printf("  %u / %u KB copied\n",
+                                 (chunk_num * buf_bytes) / 1024,
+                                 TOTAL_MODEL_BYTES / 1024);
+        }
+    }
+
+    neorv32_uart0_printf("Model loaded.\n\n");
+}
+
+// ---------------------------------------------------------------------------
+// DMEM class buffer
+// ---------------------------------------------------------------------------
+static uint32_t class_buf[WORDS_PER_CLASS];  // 400000 bytes
+
+static void preload_class(int cls) {
+    uint32_t base = (uint32_t)cls * WORDS_PER_CLASS;
+    for (uint32_t i = 0; i < WORDS_PER_CLASS; i++) {
+        class_buf[i] = ddr2_read(base + i);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// TM inference 
+// ---------------------------------------------------------------------------
+static int tm_score(int cls, uint32_t Xi[],
+                    uint32_t *preload_cyc, uint32_t *score_cyc) {
+
+    uint32_t t0 = neorv32_cpu_get_cycle();
+    preload_class(cls);
+    uint32_t t1 = neorv32_cpu_get_cycle();
+    *preload_cyc += t1 - t0;
+
+    int class_sum = 0;
+
+    for (int j = 0; j < CLAUSES; j++) {
+        uint32_t output      = 1;
+        uint32_t all_exclude = 1;
+
+        const uint32_t *clause = &class_buf[j * WORDS_PER_CLAUSE];
+
+        for (int k = 0; k < POS_CHUNKS; k++) {
+            uint32_t pos = clause[k];
+            uint32_t neg = clause[POS_CHUNKS + k];
+
+            uint32_t pos_match = (pos & ~Xi[k]);
+            uint32_t neg_match = (neg &  Xi[k]);
+
+            if ((pos | neg) == 0) continue;
+            all_exclude = 0;
+
+            if (pos_match) { output = 0; break; }
+            if (neg_match) { output = 0; break; }
+        }
+
+        output = output && !all_exclude;
+
+        if (output) {
+            if ((j & 1) == 0) class_sum++;
+            else               class_sum--;
+        }
+    }
+    
+    if (class_sum >  THRESHOLD) class_sum =  THRESHOLD;
+    if (class_sum < -THRESHOLD) class_sum = -THRESHOLD;
+    
+    uint32_t t2 = neorv32_cpu_get_cycle();
+    *score_cyc += t2 - t1;
+
+
+    return class_sum;
+}
+
+static int predict(uint32_t Xi[],
+                   uint32_t *preload_cyc, uint32_t *score_cyc) {
+    *preload_cyc = 0;
+    *score_cyc   = 0;
+
+    int max_class     = 0;
+    int max_class_sum = tm_score(0, Xi, preload_cyc, score_cyc);
+
+    for (int c = 1; c < CLASSES; c++) {
+        int s = tm_score(c, Xi, preload_cyc, score_cyc);
+        if (s > max_class_sum) {
+            max_class_sum = s;
+            max_class     = c;
+        }
+    }
+
+    return max_class;
+}
+
+// ---------------------------------------------------------------------------
+// UART
+// ---------------------------------------------------------------------------
+static void uart_recv_bytes(uint8_t *buf, uint32_t n) {
+    for (uint32_t i = 0; i < n; i++) {
+        buf[i] = (uint8_t)neorv32_uart0_getc();
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+int main(void) {
+
+    neorv32_rte_setup();
+    neorv32_uart0_setup(BAUD_RATE, 0);
+
+    if (!neorv32_uart0_available()) { return 1; }
+    if (!neorv32_spi_available()) {
+        neorv32_uart0_printf("ERROR: No SPI unit.\n");
+        return 1;
+    }
+
+    neorv32_uart0_printf("\n=== TM Inference Benchmark (Non-CFU, DMEM preload) ===\n");
+    neorv32_uart0_printf("Classes       : %u\n", CLASSES);
+    neorv32_uart0_printf("Clauses/class : %u\n", CLAUSES);
+    neorv32_uart0_printf("Features      : %u\n", FEATURES);
+    neorv32_uart0_printf("Class buf     : %u bytes (DMEM)\n", WORDS_PER_CLASS * 4);
+
+    neorv32_spi_setup(SPI_PRSC, SPI_CDIV, 0, 0);
+
+    // Wait for DDR2 calibration (init_calib_complete on gpio_i[0])
+    neorv32_uart0_printf("Waiting for DDR2 calibration...\n");
+    while (neorv32_gpio_pin_get(0) == 0) {}
+    neorv32_uart0_printf("DDR2 ready.\n");
+
+    load_model_to_ddr2();
+
+    uint8_t  raw_buf[POS_CHUNKS * 4];
+    uint32_t Xi[POS_CHUNKS];
+
+    neorv32_uart0_printf("Ready. Send %u bytes per image.\n\n", POS_CHUNKS * 4);
+
+    while (1) {
+        uart_recv_bytes(raw_buf, POS_CHUNKS * 4);
+
+        for (int k = 0; k < POS_CHUNKS; k++) {
+            Xi[k] = (uint32_t)raw_buf[k*4 + 0]
+                  | ((uint32_t)raw_buf[k*4 + 1] <<  8)
+                  | ((uint32_t)raw_buf[k*4 + 2] << 16)
+                  | ((uint32_t)raw_buf[k*4 + 3] << 24);
+        }
+
+        uint32_t t0          = neorv32_cpu_get_cycle();
+        uint32_t preload_cyc = 0;
+        uint32_t score_cyc   = 0;
+        int      pred        = predict(Xi, &preload_cyc, &score_cyc);
+        uint32_t t1          = neorv32_cpu_get_cycle();
+        uint32_t total_cyc   = t1 - t0;
+
+        neorv32_uart0_putc((char)(pred + 1));
+        neorv32_uart0_printf("RESULT %u %u %u %d\n",
+                             total_cyc, preload_cyc, score_cyc, pred);
+    }
+
+    return 0;
+}
+\end{minted}
+
+
+\chapter*{H - CFU Design 1 Per-Class Inference}
+\addcontentsline{toc}{chapter}{\protect\numberline{}H - CFU Design 1 Per-Class Inference} 
+
+\begin{minted}{c}
+// ================================================================================ //
+// TM Inference Benchmark - CFU, per-class DMEM preload                             //
+// Loads model from flash into DDR2 at startup.                                     //
+// During inference, preloads one class at a time from DDR2 into DMEM,              //
+// then runs CFU clause evaluation against the fast DMEM buffer.                    //
+// ================================================================================ //
+
+#include <neorv32.h>
+#include <neorv32_spi.h>
+#include <stdint.h>
+
+// ---------------------------------------------------------------------------
+// Config
+// ---------------------------------------------------------------------------
+#define BAUD_RATE          921600
+
+#define DDR2_BASE          0x88000000UL
+
+#define SPI_PRSC           2
+#define SPI_CDIV           0
+#define FLASH_CS           0
+#define FLASH_PAGE_SIZE    256
+#define MODEL_FLASH_OFFSET 0x00100000UL
+#define COPY_BUF_WORDS     1024
+
+#define CMD_RDSR  0x05
+#define CMD_READ  0x03
+#define SR_WIP    0x01
+
+// TM parameters
+#define CLASSES          10
+#define CLAUSES          2000
+#define FEATURES         784
+#define THRESHOLD        50
+#define INT_SIZE         32
+#define LA_CHUNKS        50
+#define POS_CHUNKS       25
+
+#define WORDS_PER_CLAUSE  LA_CHUNKS
+#define WORDS_PER_CLASS   (CLAUSES * WORDS_PER_CLAUSE)   // 100000 words = 400000 bytes
+#define TOTAL_MODEL_WORDS (CLASSES * WORDS_PER_CLASS)
+#define TOTAL_MODEL_BYTES (TOTAL_MODEL_WORDS * 4)
+
+// CFU
+#define TM_FUNCT3_CLAUSE  0b000
+
+#define TM_CFU_CLAUSE_EVAL(x_bits, pos_mask, neg_mask) \
+    neorv32_cfu_r4_instr(          \
+        TM_FUNCT3_CLAUSE,          \
+        (uint32_t)(x_bits),        \
+        (uint32_t)(pos_mask),      \
+        (uint32_t)(neg_mask)       \
+    )
+
+// ---------------------------------------------------------------------------
+// Flash
+// ---------------------------------------------------------------------------
+static inline uint8_t flash_xfer(uint8_t tx)  { return neorv32_spi_transfer(tx); }
+static inline void    flash_cs_en(void)        { neorv32_spi_cs_en(FLASH_CS); }
+static inline void    flash_cs_dis(void)       { neorv32_spi_cs_dis(); }
+
+static void flash_send_addr(uint32_t addr) {
+    flash_xfer((uint8_t)(addr >> 16));
+    flash_xfer((uint8_t)(addr >>  8));
+    flash_xfer((uint8_t)(addr >>  0));
+}
+
+static void flash_read(uint32_t addr, uint8_t *buf, uint32_t len) {
+    flash_cs_en();
+    flash_xfer(CMD_READ);
+    flash_send_addr(addr);
+    for (uint32_t i = 0; i < len; i++) {
+        buf[i] = flash_xfer(0xFF);
+    }
+    flash_cs_dis();
+}
+
+// ---------------------------------------------------------------------------
+// DDR2
+// ---------------------------------------------------------------------------
+static inline void ddr2_write(uint32_t offset_words, uint32_t value) {
+    volatile uint32_t *ptr = (volatile uint32_t*)(DDR2_BASE + offset_words * 4);
+    *ptr = value;
+}
+
+static inline uint32_t ddr2_read(uint32_t offset_words) {
+    volatile uint32_t *ptr = (volatile uint32_t*)(DDR2_BASE + offset_words * 4);
+    return *ptr;
+}
+
+// ---------------------------------------------------------------------------
+// Flash -> DDR2 copy
+// ---------------------------------------------------------------------------
+static uint8_t copy_buf[COPY_BUF_WORDS * 4];
+
+static void load_model_to_ddr2(void) {
+    neorv32_uart0_printf("Loading model from flash to DDR2...\n");
+    neorv32_uart0_printf("  Flash offset : 0x%x\n", MODEL_FLASH_OFFSET);
+    neorv32_uart0_printf("  DDR2 base    : 0x%x\n", DDR2_BASE);
+    neorv32_uart0_printf("  Model size   : %u bytes\n", TOTAL_MODEL_BYTES);
+
+    uint32_t bytes_remaining = TOTAL_MODEL_BYTES;
+    uint32_t flash_addr      = MODEL_FLASH_OFFSET;
+    uint32_t ddr2_word_off   = 0;
+    uint32_t buf_bytes       = COPY_BUF_WORDS * 4;
+    uint32_t chunks_total    = (TOTAL_MODEL_BYTES + buf_bytes - 1) / buf_bytes;
+    uint32_t chunk_num       = 0;
+
+    while (bytes_remaining > 0) {
+        uint32_t chunk = (bytes_remaining >= buf_bytes) ? buf_bytes : bytes_remaining;
+
+        flash_read(flash_addr, copy_buf, chunk);
+
+        uint32_t words = chunk / 4;
+        for (uint32_t i = 0; i < words; i++) {
+            uint32_t word = (uint32_t)copy_buf[i*4 + 0]
+                          | ((uint32_t)copy_buf[i*4 + 1] <<  8)
+                          | ((uint32_t)copy_buf[i*4 + 2] << 16)
+                          | ((uint32_t)copy_buf[i*4 + 3] << 24);
+            ddr2_write(ddr2_word_off + i, word);
+        }
+
+        flash_addr      += chunk;
+        ddr2_word_off   += words;
+        bytes_remaining -= chunk;
+        chunk_num++;
+
+        if ((chunk_num % 64) == 0 || chunk_num == chunks_total) {
+            neorv32_uart0_printf("  %u / %u KB copied\n",
+                                 (chunk_num * buf_bytes) / 1024,
+                                 TOTAL_MODEL_BYTES / 1024);
+        }
+    }
+
+    neorv32_uart0_printf("Model loaded.\n\n");
+}
+
+// ---------------------------------------------------------------------------
+// DMEM class buffer
+// ---------------------------------------------------------------------------
+static uint32_t class_buf[WORDS_PER_CLASS];  // 400000 bytes
+
+static void preload_class(int cls) {
+    uint32_t base = (uint32_t)cls * WORDS_PER_CLASS;
+    for (uint32_t i = 0; i < WORDS_PER_CLASS; i++) {
+        class_buf[i] = ddr2_read(base + i);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// TM inference CFU
+// ---------------------------------------------------------------------------
+static int tm_score(int cls, uint32_t Xi[],
+                    uint32_t *preload_cyc, uint32_t *score_cyc) {
+
+    int class_sum = 0;
+
+    uint32_t t0 = neorv32_cpu_get_cycle();
+    preload_class(cls);
+    uint32_t t1 = neorv32_cpu_get_cycle();
+    *preload_cyc += t1 - t0;
+
+    for (int j = 0; j < CLAUSES; j++) {
+        uint32_t clause_out  = 1;
+        uint32_t all_exclude = 1;
+
+        const uint32_t *clause = &class_buf[j * WORDS_PER_CLAUSE];
+
+        for (int k = 0; k < POS_CHUNKS; k++) {
+	    if ((clause[k] | clause[POS_CHUNKS + k]) == 0) continue;
+        all_exclude = 0;
+        uint32_t chunk_ok = TM_CFU_CLAUSE_EVAL(Xi[k], clause[k], clause[POS_CHUNKS + k]);
+        if (!chunk_ok) {
+                clause_out = 0;
+                break;
+            }
+
+        clause_out = clause_out && !all_exclude;
+
+        if (clause_out) {
+            if ((j & 1) == 0) class_sum++;
+            else               class_sum--;
+        }
+    }
+
+    if (class_sum >  THRESHOLD) class_sum =  THRESHOLD;
+    if (class_sum < -THRESHOLD) class_sum = -THRESHOLD;
+
+    uint32_t t2 = neorv32_cpu_get_cycle();
+    *score_cyc += t2 - t1;
+
+    return class_sum;
+}
+
+static int predict(uint32_t Xi[],
+                   uint32_t *preload_cyc, uint32_t *score_cyc) {
+    *preload_cyc = 0;
+    *score_cyc   = 0;
+
+    int max_class     = 0;
+    int max_class_sum = tm_score(0, Xi, preload_cyc, score_cyc);
+
+    for (int c = 1; c < CLASSES; c++) {
+        int s = tm_score(c, Xi, preload_cyc, score_cyc);
+        if (s > max_class_sum) {
+            max_class_sum = s;
+            max_class     = c;
+        }
+    }
+
+    return max_class;
+}
+
+// ---------------------------------------------------------------------------
+// UART
+// ---------------------------------------------------------------------------
+static void uart_recv_bytes(uint8_t *buf, uint32_t n) {
+    for (uint32_t i = 0; i < n; i++) {
+        buf[i] = (uint8_t)neorv32_uart0_getc();
+    }
+}
+
+void delay_ms(uint32_t time_ms) {
+  neorv32_aux_delay_ms(neorv32_sysinfo_get_clk(), time_ms);
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+int main(void) {
+
+    neorv32_rte_setup();
+    neorv32_uart0_setup(BAUD_RATE, 0);
+
+    if (!neorv32_uart0_available()) { return 1; }
+    if (!neorv32_spi_available()) {
+        neorv32_uart0_printf("ERROR: No SPI unit.\n");
+        return 1;
+    }
+    delay_ms(1000);
+    neorv32_uart0_printf("\n=== TM Inference Benchmark (CFU, DMEM preload) ===\n");
+    neorv32_uart0_printf("Classes       : %u\n", CLASSES);
+    neorv32_uart0_printf("Clauses/class : %u\n", CLAUSES);
+    neorv32_uart0_printf("Features      : %u\n", FEATURES);
+    neorv32_uart0_printf("Class buf     : %u bytes (DMEM)\n", WORDS_PER_CLASS * 4);
+
+    neorv32_spi_setup(SPI_PRSC, SPI_CDIV, 0, 0);
+
+    // Wait for DDR2 calibration (init_calib_complete on gpio_i[0])
+    neorv32_uart0_printf("Waiting for DDR2 calibration...\n");
+    while (neorv32_gpio_pin_get(0) == 0) {}
+    neorv32_uart0_printf("DDR2 ready.\n");
+
+    load_model_to_ddr2();
+
+    uint8_t  raw_buf[POS_CHUNKS * 4];
+    uint32_t Xi[POS_CHUNKS];
+
+    neorv32_uart0_printf("Ready. Send %u bytes per image.\n\n", POS_CHUNKS * 4);
+
+
+    while (1) {
+        uart_recv_bytes(raw_buf, POS_CHUNKS * 4);
+
+        for (int k = 0; k < POS_CHUNKS; k++) {
+            Xi[k] = (uint32_t)raw_buf[k*4 + 0]
+                  | ((uint32_t)raw_buf[k*4 + 1] <<  8)
+                  | ((uint32_t)raw_buf[k*4 + 2] << 16)
+                  | ((uint32_t)raw_buf[k*4 + 3] << 24);
+        }
+
+        uint32_t t0          = neorv32_cpu_get_cycle();
+        uint32_t preload_cyc = 0;
+        uint32_t score_cyc   = 0;
+        int      pred        = predict(Xi, &preload_cyc, &score_cyc);
+        uint32_t t1          = neorv32_cpu_get_cycle();
+        uint32_t total_cyc   = t1 - t0;
+
+        neorv32_uart0_putc((char)(pred + 1));
+        neorv32_uart0_printf("RESULT %u %u %u %d\n",
+                             total_cyc, preload_cyc, score_cyc, pred);
+    }
+
+    return 0;
+}    
+\end{minted}
+
+
+\chapter*{I - CFU Design 2 Per-Class Inference}
+\addcontentsline{toc}{chapter}{\protect\numberline{}I - CFU Design 2 Per-Class Inference}
+\begin{minted}{c}
+#include <neorv32.h>
+#include <neorv32_spi.h>
+#include <stdint.h>
+
+// ---------------------------------------------------------------------------
+// Config
+// ---------------------------------------------------------------------------
+#define BAUD_RATE          921600
+
+#define DDR2_BASE          0x88000000UL
+
+#define SPI_PRSC           2
+#define SPI_CDIV           0
+#define FLASH_CS           0
+#define FLASH_PAGE_SIZE    256
+#define MODEL_FLASH_OFFSET 0x00100000UL
+#define COPY_BUF_WORDS     1024
+
+#define CMD_RDSR  0x05
+#define CMD_READ  0x03
+#define SR_WIP    0x01
+
+// TM parameters
+#define CLASSES          10
+#define CLAUSES          2000
+#define FEATURES         784
+#define THRESHOLD        50
+#define INT_SIZE         32
+#define LA_CHUNKS        50
+#define POS_CHUNKS       25
+
+#define WORDS_PER_CLAUSE  LA_CHUNKS
+#define WORDS_PER_CLASS   (CLAUSES * WORDS_PER_CLAUSE)   // 100000 words = 400000 bytes
+#define TOTAL_MODEL_WORDS (CLASSES * WORDS_PER_CLASS)
+#define TOTAL_MODEL_BYTES (TOTAL_MODEL_WORDS * 4)
+
+// CFU
+#define TM_FUNCT3_CHUNK_EVAL    0b000
+#define TM_FUNCT3_CHUNK_EVAL_FAST 0b011
+#define TM_FUNCT3_CLAUSE_COMMIT 0b001
+#define TM_FUNCT3_GET_SCORE     0b010
+
+
+// CHUNK_EVAL: update internal clause state for one 32-bit chunk
+// result is ignored
+#define CFU_CHUNK_EVAL(x_bits, pos_mask, neg_mask) \
+    neorv32_cfu_r4_instr(          \
+        TM_FUNCT3_CHUNK_EVAL,      \
+        (uint32_t)(x_bits),        \
+        (uint32_t)(pos_mask),      \
+        (uint32_t)(neg_mask)       \
+    )
+
+// CLAUSE_COMMIT: finalize clause vote, pass clause index for polarity
+// result is ignored
+#define CFU_CLAUSE_COMMIT(clause_idx) \
+    neorv32_cfu_r4_instr(            \
+        TM_FUNCT3_CLAUSE_COMMIT,     \
+        (uint32_t)(clause_idx),      \
+        (uint32_t)0,                           \
+        (uint32_t)0                            \
+    )
+ 
+// GET_SCORE: return clamped class_sum and reset for next class
+#define CFU_GET_SCORE() \
+    (int32_t)neorv32_cfu_r4_instr( \
+        TM_FUNCT3_GET_SCORE,        \
+        (uint32_t)0,                          \
+        (uint32_t)0,                          \
+        (uint32_t)0                           \
+    )
+
+// ---------------------------------------------------------------------------
+// Flash
+// ---------------------------------------------------------------------------
+static inline uint8_t flash_xfer(uint8_t tx)  { return neorv32_spi_transfer(tx); }
+static inline void    flash_cs_en(void)        { neorv32_spi_cs_en(FLASH_CS); }
+static inline void    flash_cs_dis(void)       { neorv32_spi_cs_dis(); }
+
+static void flash_send_addr(uint32_t addr) {
+    flash_xfer((uint8_t)(addr >> 16));
+    flash_xfer((uint8_t)(addr >>  8));
+    flash_xfer((uint8_t)(addr >>  0));
+}
+
+static void flash_read(uint32_t addr, uint8_t *buf, uint32_t len) {
+    flash_cs_en();
+    flash_xfer(CMD_READ);
+    flash_send_addr(addr);
+    for (uint32_t i = 0; i < len; i++) {
+        buf[i] = flash_xfer(0xFF);
+    }
+    flash_cs_dis();
+}
+
+// ---------------------------------------------------------------------------
+// DDR2
+// ---------------------------------------------------------------------------
+static inline void ddr2_write(uint32_t offset_words, uint32_t value) {
+    volatile uint32_t *ptr = (volatile uint32_t*)(DDR2_BASE + offset_words * 4);
+    *ptr = value;
+}
+
+static inline uint32_t ddr2_read(uint32_t offset_words) {
+    volatile uint32_t *ptr = (volatile uint32_t*)(DDR2_BASE + offset_words * 4);
+    return *ptr;
+}
+
+// ---------------------------------------------------------------------------
+// Flash -> DDR2 copy
+// ---------------------------------------------------------------------------
+static uint8_t copy_buf[COPY_BUF_WORDS * 4];
+
+static void load_model_to_ddr2(void) {
+    neorv32_uart0_printf("Loading model from flash to DDR2...\n");
+    neorv32_uart0_printf("  Flash offset : 0x%x\n", MODEL_FLASH_OFFSET);
+    neorv32_uart0_printf("  DDR2 base    : 0x%x\n", DDR2_BASE);
+    neorv32_uart0_printf("  Model size   : %u bytes\n", TOTAL_MODEL_BYTES);
+
+    uint32_t bytes_remaining = TOTAL_MODEL_BYTES;
+    uint32_t flash_addr      = MODEL_FLASH_OFFSET;
+    uint32_t ddr2_word_off   = 0;
+    uint32_t buf_bytes       = COPY_BUF_WORDS * 4;
+    uint32_t chunks_total    = (TOTAL_MODEL_BYTES + buf_bytes - 1) / buf_bytes;
+    uint32_t chunk_num       = 0;
+
+    while (bytes_remaining > 0) {
+        uint32_t chunk = (bytes_remaining >= buf_bytes) ? buf_bytes : bytes_remaining;
+
+        flash_read(flash_addr, copy_buf, chunk);
+
+        uint32_t words = chunk / 4;
+        for (uint32_t i = 0; i < words; i++) {
+            uint32_t word = (uint32_t)copy_buf[i*4 + 0]
+                          | ((uint32_t)copy_buf[i*4 + 1] <<  8)
+                          | ((uint32_t)copy_buf[i*4 + 2] << 16)
+                          | ((uint32_t)copy_buf[i*4 + 3] << 24);
+            ddr2_write(ddr2_word_off + i, word);
+        }
+
+        flash_addr      += chunk;
+        ddr2_word_off   += words;
+        bytes_remaining -= chunk;
+        chunk_num++;
+
+        if ((chunk_num % 64) == 0 || chunk_num == chunks_total) {
+            neorv32_uart0_printf("  %u / %u KB copied\n",
+                                 (chunk_num * buf_bytes) / 1024,
+                                 TOTAL_MODEL_BYTES / 1024);
+        }
+    }
+
+    neorv32_uart0_printf("Model loaded.\n\n");
+}
+
+// ---------------------------------------------------------------------------
+// DMEM class buffer
+// ---------------------------------------------------------------------------
+static uint32_t class_buf[WORDS_PER_CLASS];  // 400000 bytes
+
+static void preload_class(int cls) {
+    uint32_t base = (uint32_t)cls * WORDS_PER_CLASS;
+    for (uint32_t i = 0; i < WORDS_PER_CLASS; i++) {
+        class_buf[i] = ddr2_read(base + i);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// TM inference CFU
+// ---------------------------------------------------------------------------
+static int tm_score(int cls, uint32_t Xi[],
+                    uint32_t *preload_cyc, uint32_t *score_cyc) {
+
+    uint32_t t0 = neorv32_cpu_get_cycle();
+    preload_class(cls);
+    uint32_t t1 = neorv32_cpu_get_cycle();
+    *preload_cyc += t1 - t0;
+
+    for (int j = 0; j < CLAUSES; j++) {
+        const uint32_t *clause = &class_buf[j * WORDS_PER_CLAUSE];
+
+        for (int k = 0; k < POS_CHUNKS; k++) {
+	    if ((clause[k] | clause[POS_CHUNKS + k]) == 0) continue;
+        uint32_t chunk_ok = CFU_CHUNK_EVAL(Xi[k], clause[k], clause[POS_CHUNKS + k]);
+        if (chunk_ok & 1) break;  // clause already failed, skip remaining chunks
+        }
+
+        CFU_CLAUSE_COMMIT(j);
+    }
+
+    int class_sum = (int)CFU_GET_SCORE();
+
+    uint32_t t2 = neorv32_cpu_get_cycle();
+    *score_cyc += t2 - t1;
+
+    return class_sum;
+}
+
+static int predict(uint32_t Xi[],
+                   uint32_t *preload_cyc, uint32_t *score_cyc) {
+    *preload_cyc = 0;
+    *score_cyc   = 0;
+
+    int max_class     = 0;
+    int max_class_sum = tm_score(0, Xi, preload_cyc, score_cyc);
+
+    for (int c = 1; c < CLASSES; c++) {
+        int s = tm_score(c, Xi, preload_cyc, score_cyc);
+        if (s > max_class_sum) {
+            max_class_sum = s;
+            max_class     = c;
+        }
+    }
+
+    return max_class;
+}
+
+// ---------------------------------------------------------------------------
+// UART
+// ---------------------------------------------------------------------------
+static void uart_recv_bytes(uint8_t *buf, uint32_t n) {
+    for (uint32_t i = 0; i < n; i++) {
+        buf[i] = (uint8_t)neorv32_uart0_getc();
+    }
+}
+
+void delay_ms(uint32_t time_ms) {
+  neorv32_aux_delay_ms(neorv32_sysinfo_get_clk(), time_ms);
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+int main(void) {
+
+    neorv32_rte_setup();
+    neorv32_uart0_setup(BAUD_RATE, 0);
+
+    if (!neorv32_uart0_available()) { return 1; }
+    if (!neorv32_spi_available()) {
+        neorv32_uart0_printf("ERROR: No SPI unit.\n");
+        return 1;
+    }
+    delay_ms(1000);
+    neorv32_uart0_printf("\n=== TM Inference Benchmark (CFU, DMEM preload) ===\n");
+    neorv32_uart0_printf("Classes       : %u\n", CLASSES);
+    neorv32_uart0_printf("Clauses/class : %u\n", CLAUSES);
+    neorv32_uart0_printf("Features      : %u\n", FEATURES);
+    neorv32_uart0_printf("Class buf     : %u bytes (DMEM)\n", WORDS_PER_CLASS * 4);
+
+    neorv32_spi_setup(SPI_PRSC, SPI_CDIV, 0, 0);
+
+    // Wait for DDR2 calibration (init_calib_complete on gpio_i[0])
+    neorv32_uart0_printf("Waiting for DDR2 calibration...\n");
+    while (neorv32_gpio_pin_get(0) == 0) {}
+    neorv32_uart0_printf("DDR2 ready.\n");
+
+    load_model_to_ddr2();
+
+    uint8_t  raw_buf[POS_CHUNKS * 4];
+    uint32_t Xi[POS_CHUNKS];
+
+    neorv32_uart0_printf("Ready. Send %u bytes per image.\n\n", POS_CHUNKS * 4);
+
+
+    while (1) {
+        uart_recv_bytes(raw_buf, POS_CHUNKS * 4);
+
+        for (int k = 0; k < POS_CHUNKS; k++) {
+            Xi[k] = (uint32_t)raw_buf[k*4 + 0]
+                  | ((uint32_t)raw_buf[k*4 + 1] <<  8)
+                  | ((uint32_t)raw_buf[k*4 + 2] << 16)
+                  | ((uint32_t)raw_buf[k*4 + 3] << 24);
+        }
+
+        uint32_t t0          = neorv32_cpu_get_cycle();
+        uint32_t preload_cyc = 0;
+        uint32_t score_cyc   = 0;
+        int      pred        = predict(Xi, &preload_cyc, &score_cyc);
+        uint32_t t1          = neorv32_cpu_get_cycle();
+        uint32_t total_cyc   = t1 - t0;
+
+        neorv32_uart0_putc((char)(pred + 1));
+        neorv32_uart0_printf("RESULT %u %u %u %d\n",
+                             total_cyc, preload_cyc, score_cyc, pred);
+    }
+
+    return 0;
+}
+\end{minted}
+
+\chapter*{J - Benchmark Inference Python Script}
+\addcontentsline{toc}{chapter}{\protect\numberline{}J - Benchmark Inference Python Script}
+
+\begin{minted}{python3}
+import argparse
+import csv
+import os
+import re
+import serial
+import struct
+import time
+
+BAUD_RATE        = 921600
+FEATURES         = 784
+POS_CHUNKS       = 25
+BYTES_PER_IMAGE  = POS_CHUNKS * 4   # 100 bytes
+IMAGES_PER_DIGIT = 20
+CPU_FREQ_HZ      = 100_000_000      # 100 MHz, used to convert cycles to ms
+
+
+def pack_image(bits: list) -> bytes:
+    assert len(bits) == FEATURES
+    words = []
+    for i in range(POS_CHUNKS):
+        word = 0
+        for b in range(32):
+            bit_idx = i * 32 + b
+            if bit_idx < FEATURES and bits[bit_idx] == 1:
+                word |= (1 << b)
+        words.append(word)
+    return struct.pack(f"<{POS_CHUNKS}I", *words)
+
+
+def load_example(data_dir: str, digit: int, index: int):
+    folder = os.path.join(data_dir, str(digit))
+    if not os.path.isdir(folder):
+        raise FileNotFoundError(f"Folder '{folder}' not found. Run sort_mnist.py first.")
+
+    files = sorted([f for f in os.listdir(folder) if f.endswith(".txt")])
+    if index >= len(files):
+        raise IndexError(f"Only {len(files)} examples for digit {digit}, requested index {index}")
+
+    path = os.path.join(folder, files[index])
+    with open(path, "r") as f:
+        tokens = f.read().strip().split()
+
+    if len(tokens) != FEATURES:
+        raise ValueError(f"Expected {FEATURES} values in {path}, got {len(tokens)}")
+
+    return [int(t) for t in tokens], files[index]
+
+
+def wait_ready(ser: serial.Serial):
+    print("Waiting for device ready...")
+    buf = b""
+    while b"Ready." not in buf:
+        chunk = ser.read(64)
+        if chunk:
+            buf += chunk
+            print(chunk.decode("ascii", errors="replace"), end="", flush=True)
+    print("\nDevice ready.\n")
+
+
+def send_image_and_get_result(ser: serial.Serial, packed: bytes):
+    ser.write(packed)
+
+    # Read raw prediction byte (sent as pred+1)
+    pred_byte = None
+    while pred_byte is None:
+        b = ser.read(1)
+        if not b:
+            raise TimeoutError("Timeout waiting for prediction byte")
+        val = b[0]
+        if 1 <= val <= 10:
+            pred_byte = val - 1
+
+    # Read RESULT line — skip empty lines and \r
+    while True:
+        line = b""
+        while True:
+            c = ser.read(1)
+            if not c:
+                raise TimeoutError("Timeout waiting for RESULT line")
+            if c == b'\n':
+                break
+            line += c
+
+        line_str = line.decode("ascii", errors="replace").strip()
+        if not line_str:
+            continue  # skip empty lines
+
+        m = re.search(r"RESULT\s+(\d+)\s+(\d+)", line_str)
+        if not m:
+            raise ValueError(f"Unexpected line from device: '{line_str}'")
+
+        return pred_byte, int(m.group(1))
+
+
+def run_benchmark(port: str, baud: int, data_dir: str, mode: str, log_path: str, summary_path: str):
+
+    total_images = IMAGES_PER_DIGIT * 10
+    print(f"=== TM Inference Benchmark ===")
+    print(f"Mode     : {mode}")
+    print(f"Port     : {port} @ {baud} baud")
+    print(f"Data     : {data_dir}")
+    print(f"Images   : {IMAGES_PER_DIGIT} per digit x 10 digits = {total_images} total")
+    print(f"CSV log  : {log_path}")
+    print(f"Summary  : {summary_path}")
+    print()
+
+    # Pre-load all test examples
+    print("Loading test examples...")
+    test_set = []
+    for digit in range(10):
+        for idx in range(IMAGES_PER_DIGIT):
+            bits, filename = load_example(data_dir, digit, idx)
+            packed = pack_image(bits)
+            test_set.append({
+                "digit":    digit,
+                "filename": filename,
+                "packed":   packed,
+            })
+    print(f"Loaded {len(test_set)} examples.\n")
+
+    results = []
+
+    with serial.Serial(port, baud, timeout=30) as ser:
+        wait_ready(ser)
+
+        print(f"Running {total_images} inferences...\n")
+        start_time = time.time()
+
+        for i, item in enumerate(test_set):
+            digit    = item["digit"]
+            filename = item["filename"]
+            packed   = item["packed"]
+
+            pred, cycles = send_image_and_get_result(ser, packed)
+            correct = (pred == digit)
+
+            ms = cycles / CPU_FREQ_HZ * 1000
+
+            results.append({
+                "digit":    digit,
+                "filename": filename,
+                "pred":     pred,
+                "correct":  1 if correct else 0,
+                "cycles":   cycles,
+                "ms":       f"{ms:.3f}",
+            })
+
+            marker = "correct" if correct else "incorrect"
+            print(f"  [{i+1:3d}/{total_images}] digit={digit} pred={pred} {marker}  cycles={cycles}  ({ms:.3f} ms)")
+
+        elapsed = time.time() - start_time
+
+    # Save CSV log
+    with open(log_path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["digit", "filename", "pred", "correct", "cycles", "ms"])
+        writer.writeheader()
+        writer.writerows(results)
+
+    # Build summary lines
+    summary_lines = []
+    summary_lines.append(f"{'='*60}")
+    summary_lines.append(f"SUMMARY ({mode})")
+    summary_lines.append(f"{'='*60}")
+    summary_lines.append(f"{'Digit':<8} {'Correct':<10} {'Accuracy':<12} {'Avg Cycles':<16} {'Avg ms':<10}")
+    summary_lines.append(f"{'-'*60}")
+
+    total_correct = 0
+    total_cycles  = 0
+
+    for digit in range(10):
+        digit_results = [r for r in results if r["digit"] == digit]
+        correct  = sum(r["correct"] for r in digit_results)
+        cycles   = [r["cycles"] for r in digit_results]
+        avg_cyc  = sum(cycles) / len(cycles)
+        avg_ms   = avg_cyc / CPU_FREQ_HZ * 1000
+        total_correct += correct
+        total_cycles  += sum(cycles)
+        summary_lines.append(
+            f"  {digit:<6} {correct}/{IMAGES_PER_DIGIT:<7}  "
+            f"{correct/IMAGES_PER_DIGIT*100:6.1f}%     "
+            f"{avg_cyc:>12.0f}     {avg_ms:>8.3f}"
+        )
+
+    summary_lines.append(f"{'-'*60}")
+    overall_acc = total_correct / total_images * 100
+    avg_cycles  = total_cycles / total_images
+    avg_ms_all  = avg_cycles / CPU_FREQ_HZ * 1000
+    summary_lines.append(
+        f"  {'ALL':<6} {total_correct}/{total_images:<5}  "
+        f"{overall_acc:6.1f}%     "
+        f"{avg_cycles:>12.0f}     {avg_ms_all:>8.3f}"
+    )
+    summary_lines.append(f"")
+    summary_lines.append(f"Total time : {elapsed:.1f}s")
+    summary_lines.append(f"Throughput : {total_images/elapsed:.1f} inferences/s")
+    summary_lines.append(f"CSV log    : {log_path}")
+    summary_lines.append(f"Summary    : {summary_path}")
+
+    # Print summary
+    print()
+    for line in summary_lines:
+        print(line)
+
+    # Save summary to txt
+    with open(summary_path, "w") as f:
+        f.write("\n".join(summary_lines) + "\n")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="NEORV32 TM inference benchmark")
+    parser.add_argument("--port",  default="COM3",         help="Serial port")
+    parser.add_argument("--baud",  type=int, default=BAUD_RATE, help="Baud rate")
+    parser.add_argument("--data",  default="mnist_sorted", help="Sorted MNIST folder")
+    parser.add_argument("--mode",  default="noncfu",       help="noncfu or cfu")
+    args = parser.parse_args()
+
+    log_path     = f"benchmark_{args.mode}.csv"
+    summary_path = f"benchmark_{args.mode}_summary.txt"
+
+    run_benchmark(args.port, args.baud, args.data, args.mode, log_path, summary_path)
+
+
+if __name__ == "__main__":
+    main()
+\end{minted}
+
+\chapter*{K - Python Model Transfer Script}
+\addcontentsline{toc}{chapter}{\protect\numberline{}K - Python Model Transfer Script}
+\begin{minted}{python3}
+import argparse
+import serial
+import struct
+import sys
+import time
+
+CHUNK_SIZE  = 4096   # must match C #define
+BAUD_RATE   = 921600
+ACK         = 0x79
+NAK         = 0x6E
+TIMEOUT_S   = 30     # seconds to wait for ACK after erase (sectors take time)
+
+
+def wait_ack(ser: serial.Serial, timeout: float = TIMEOUT_S) -> bool:
+    
+    ser.timeout = timeout
+    while True:
+        resp = ser.read(1)
+        if not resp:
+            print("ERROR: Timeout waiting for ACK.")
+            return False
+        b = resp[0]
+        if b == ACK:
+            return True
+        if b == NAK:
+            print("ERROR: NAK received from device.")
+            return False
+        try:
+            print(chr(b), end="", flush=True)
+        except:
+            pass
+
+
+def send_model(port: str, baud: int, model_path: str):
+
+    with open(model_path, "rb") as f:
+        model_data = f.read()
+
+    model_size  = len(model_data)
+    num_chunks  = (model_size + CHUNK_SIZE - 1) // CHUNK_SIZE
+
+    print(f"Model      : {model_path}")
+    print(f"Size       : {model_size} bytes ({model_size/1024/1024:.2f} MB)")
+    print(f"Chunks     : {num_chunks} x {CHUNK_SIZE} bytes")
+    print(f"Port       : {port} @ {baud} baud")
+    print()
+
+    with serial.Serial(port, baud, timeout=5) as ser:
+        time.sleep(0.3)
+        ser.reset_input_buffer()
+
+        print("Sending model size...")
+        ser.write(struct.pack("<I", model_size))
+
+        num_sectors = (model_size + 64*1024 - 1) // (64*1024)
+        erase_timeout = max(30, num_sectors * 3)  # 3s per sector, min 30s
+        print(f"Waiting for erase ({num_sectors} sectors, up to {erase_timeout}s)...")
+
+        if not wait_ack(ser, timeout=erase_timeout):
+            sys.exit(1)
+        print("Erase done. Starting transfer...\n")
+        time.sleep(0.1)
+
+        start_time = time.time()
+
+        for chunk_idx in range(num_chunks):
+            offset = chunk_idx * CHUNK_SIZE
+            chunk  = model_data[offset : offset + CHUNK_SIZE]
+
+            # Pad last chunk to page boundary (256 bytes)
+            if len(chunk) % 256 != 0:
+                chunk = chunk + b"\xff" * (256 - len(chunk) % 256)
+
+            ser.write(chunk)
+
+            # Wait for ACK — device ACKs after programming the chunk to flash
+            if not wait_ack(ser, timeout=5.0):
+                print(f"Failed on chunk {chunk_idx + 1}/{num_chunks}")
+                sys.exit(1)
+            time.sleep(0.05)
+            
+            # Progress
+            done     = chunk_idx + 1
+            pct      = done / num_chunks * 100
+            elapsed  = time.time() - start_time
+            rate     = (done * CHUNK_SIZE) / elapsed / 1024 if elapsed > 0 else 0
+            eta      = (num_chunks - done) * CHUNK_SIZE / (rate * 1024) if rate > 0 else 0
+            bar      = "#" * (done * 40 // num_chunks)
+            print(f"\r  [{bar:<40}] {pct:5.1f}%  {rate:6.1f} KB/s  ETA {eta:5.0f}s",
+                  end="", flush=True)
+
+        elapsed = time.time() - start_time
+        print(f"\n\nTransfer complete in {elapsed:.1f}s "
+              f"({model_size/elapsed/1024:.1f} KB/s average).")
+        print(f"Model written to flash at offset 0x00100000.")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Send TM model to NEORV32 flash writer")
+    parser.add_argument("model",   help="Path to raw model binary file")
+    parser.add_argument("--port",  default="COM3", help="Serial port")
+    parser.add_argument("--baud",  type=int, default=BAUD_RATE, help="Baud rate")
+    args = parser.parse_args()
+    send_model(args.port, args.baud, args.model)
+
+
+if __name__ == "__main__":
+    main()
+\end{minted}
+
+\chapter*{L - Write Model To Flash Script}
+\addcontentsline{toc}{chapter}{\protect\numberline{}L - Write Model To Flash Script}
+\begin{minted}{c}
+#include <neorv32.h>
+#include <neorv32_spi.h>
+#include <stdint.h>
+
+// ---------------------------------------------------------------------------
+// Configuration
+// ---------------------------------------------------------------------------
+#define BAUD_RATE          921600
+#define FLASH_CS           0
+#define MODEL_FLASH_OFFSET 0x00100000UL   // 1MB into flash, past bootloader
+
+// SPI clock: prescaler 2 = /8, cdiv 0 -> 6.25 MHz at 100MHz.
+#define SPI_PRSC           2
+#define SPI_CDIV           0
+
+// Chunk size: how many bytes to send before waiting for ACK.
+// 4096 = 16 pages per chunk
+#define CHUNK_SIZE         4096
+#define FLASH_PAGE_SIZE    256
+#define FLASH_SECTOR_SIZE  (64 * 1024UL)
+
+// Flash commands
+#define CMD_WREN  0x06
+#define CMD_RDSR  0x05
+#define CMD_PP    0x02
+#define CMD_SE    0xD8
+#define CMD_READ  0x03
+#define SR_WIP    0x01
+
+// Protocol bytes
+#define ACK  0x79
+#define NAK  0x6E
+
+// ---------------------------------------------------------------------------
+// Flash helpers
+// ---------------------------------------------------------------------------
+
+static inline uint8_t flash_xfer(uint8_t tx)  { return neorv32_spi_transfer(tx); }
+static inline void    flash_cs_en(void)        { neorv32_spi_cs_en(FLASH_CS); }
+static inline void    flash_cs_dis(void)       { neorv32_spi_cs_dis(); }
+
+static void flash_send_addr(uint32_t addr) {
+    flash_xfer((uint8_t)(addr >> 16));
+    flash_xfer((uint8_t)(addr >>  8));
+    flash_xfer((uint8_t)(addr >>  0));
+}
+
+static void flash_wait_ready(void) {
+    uint8_t sr;
+    do {
+        flash_cs_en();
+        flash_xfer(CMD_RDSR);
+        sr = flash_xfer(0xFF);
+        flash_cs_dis();
+    } while (sr & SR_WIP);
+}
+
+static void flash_write_enable(void) {
+    flash_cs_en();
+    flash_xfer(CMD_WREN);
+    flash_cs_dis();
+}
+
+static void flash_erase_sector(uint32_t addr) {
+    flash_write_enable();
+    flash_cs_en();
+    flash_xfer(CMD_SE);
+    flash_send_addr(addr);
+    flash_cs_dis();
+    flash_wait_ready();
+}
+
+static void flash_program_page(uint32_t addr, const uint8_t *data) {
+    flash_write_enable();
+    flash_cs_en();
+    flash_xfer(CMD_PP);
+    flash_send_addr(addr);
+    for (int i = 0; i < FLASH_PAGE_SIZE; i++) {
+        flash_xfer(data[i]);
+    }
+    flash_cs_dis();
+    flash_wait_ready();
+}
+
+// ---------------------------------------------------------------------------
+// UART helpers
+// ---------------------------------------------------------------------------
+
+static void uart_recv_bytes(uint8_t *buf, uint32_t n) {
+    for (uint32_t i = 0; i < n; i++) {
+        buf[i] = (uint8_t)neorv32_uart0_getc();
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+int main(void) {
+
+    neorv32_rte_setup();
+    neorv32_uart0_setup(BAUD_RATE, 0);
+
+    if (!neorv32_uart0_available()) { return 1; }
+    if (!neorv32_spi_available()) {
+        neorv32_uart0_printf("ERROR: No SPI unit.\n");
+        return 1;
+    }
+
+    neorv32_spi_setup(SPI_PRSC, SPI_CDIV, 0, 0);
+
+    neorv32_uart0_printf("\n=== TM Flash Writer ===\n");
+    neorv32_uart0_printf("Baud  : 921600\n");
+    neorv32_uart0_printf("Chunk : %u bytes (%u pages)\n", CHUNK_SIZE, CHUNK_SIZE / FLASH_PAGE_SIZE);
+    neorv32_uart0_printf("Waiting for model size...\n");
+
+    uint8_t size_buf[4];
+    uart_recv_bytes(size_buf, 4);
+    uint32_t model_size = (uint32_t)size_buf[0]
+                        | ((uint32_t)size_buf[1] <<  8)
+                        | ((uint32_t)size_buf[2] << 16)
+                        | ((uint32_t)size_buf[3] << 24);
+
+
+
+    if (model_size == 0 || model_size > 0xF00000UL) { // max 15MB (leave room for bootloader)
+        // neorv32_uart0_printf("ERROR: Invalid model size.\n");
+        neorv32_uart0_putc(NAK);
+        return 1;
+    }
+
+    uint32_t num_sectors = (model_size + FLASH_SECTOR_SIZE - 1) / FLASH_SECTOR_SIZE;
+    // neorv32_uart0_printf("Erasing %u sector(s)...\n", num_sectors);
+
+    for (uint32_t s = 0; s < num_sectors; s++) {
+        flash_erase_sector(MODEL_FLASH_OFFSET + s * FLASH_SECTOR_SIZE);
+    }
+
+
+    neorv32_uart0_putc(ACK);
+
+    static uint8_t chunk_buf[CHUNK_SIZE]; // static to avoid stack overflow
+
+    uint32_t bytes_remaining = model_size;
+    uint32_t flash_addr      = MODEL_FLASH_OFFSET;
+    uint32_t chunk_num       = 0;
+    uint32_t total_chunks    = (model_size + CHUNK_SIZE - 1) / CHUNK_SIZE;
+
+    while (bytes_remaining > 0) {
+
+        uint32_t chunk_bytes = (bytes_remaining >= CHUNK_SIZE)
+                               ? CHUNK_SIZE
+                               : bytes_remaining;
+
+        // Pad last chunk to full page boundary
+        uint32_t padded = ((chunk_bytes + FLASH_PAGE_SIZE - 1) / FLASH_PAGE_SIZE) * FLASH_PAGE_SIZE;
+        for (uint32_t i = chunk_bytes; i < padded; i++) {
+            chunk_buf[i] = 0xFF;
+        }
+
+        // Receive chunk bytes from UART
+        uart_recv_bytes(chunk_buf, chunk_bytes);
+
+        // Program chunk as individual pages
+        uint32_t pages = padded / FLASH_PAGE_SIZE;
+        for (uint32_t p = 0; p < pages; p++) {
+            flash_program_page(flash_addr + p * FLASH_PAGE_SIZE,
+                               chunk_buf  + p * FLASH_PAGE_SIZE);
+        }
+
+        flash_addr      += padded;
+        bytes_remaining -= chunk_bytes;
+        chunk_num++;
+
+        // ACK this chunk — host sends next chunk only after receiving this
+        neorv32_uart0_putc(ACK);
+
+        // Print progress every 16 chunks (~256KB)
+        if ((chunk_num % 16) == 0 || chunk_num == total_chunks) {
+            // neorv32_uart0_printf("  %u / %u chunks done\n", chunk_num, total_chunks);
+        }
+    }
+
+
+    while (1) {}
+    return 0;
+}
+\end{minted}
+
+\chapter*{M - Python Exe Uploader Script}
+\addcontentsline{toc}{chapter}{\protect\numberline{}M - Python Exe Uploader Script}
+\begin{minted}{python3}
+import sys
+import time
+import serial
+
+
+BAUD_RATE       = 19200
+BOOT_TIMEOUT    = 2.0   # seconds to wait for bootloader response after 'u'
+UPLOAD_TIMEOUT  = 10.0  # seconds to wait for 'OK' after sending the binary
+AWAIT_STRING    = b"Awaiting neorv32_exe.bin"
+OK_STRING       = b"OK"
+
+
+def read_until(port: serial.Serial, token: bytes, timeout: float) -> bytes:
+    """Read from port until token is found or timeout expires. Returns all bytes read."""
+    buf = b""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        chunk = port.read(port.in_waiting or 1)
+        if chunk:
+            buf += chunk
+            if token in buf:
+                return buf
+    return buf
+
+
+def main():
+    if len(sys.argv) != 3:
+        print("Upload and execute application image via UART to the NEORV32 bootloader.")
+        print("Reset the processor before starting the upload.\n")
+        print("Usage:   python neorv32_uart_upload.py <serial port> <neorv32_exe.bin>")
+        print("Example: python neorv32_uart_upload.py COM3 path/to/neorv32_exe.bin")
+        sys.exit(0)
+
+    port_name = sys.argv[1]
+    bin_path  = sys.argv[2]
+
+    # --- open and configure serial port ---
+    try:
+        port = serial.Serial(
+            port=port_name,
+            baudrate=BAUD_RATE,
+            bytesize=serial.EIGHTBITS,
+            parity=serial.PARITY_NONE,
+            stopbits=serial.STOPBITS_ONE,
+            timeout=1,
+            xonxoff=False,
+            rtscts=False,
+            dsrdtr=False,
+        )
+    except serial.SerialException as e:
+        print(f"Error opening port {port_name}: {e}")
+        sys.exit(1)
+
+    print(f"Opened {port_name} at {BAUD_RATE} baud.")
+
+    # --- abort autoboot sequence ---
+    port.write(b" ")
+    port.flush()
+    time.sleep(0.1)
+    port.reset_input_buffer()
+
+    # --- send upload command ---
+    port.write(b"u")
+    port.flush()
+
+    # --- wait for bootloader to signal it is ready ---
+    print("Waiting for bootloader...")
+    response = read_until(port, AWAIT_STRING, BOOT_TIMEOUT)
+
+    if AWAIT_STRING not in response:
+        print("Bootloader response error!")
+        print("Reset the processor before starting the upload.")
+        print(f"Received: {response!r}")
+        port.close()
+        sys.exit(1)
+
+    # --- send the executable ---
+    try:
+        with open(bin_path, "rb") as f:
+            exe_data = f.read()
+    except OSError as e:
+        print(f"Error reading {bin_path}: {e}")
+        port.close()
+        sys.exit(1)
+
+    print(f"Uploading {len(exe_data)} bytes...", end="", flush=True)
+    port.write(exe_data)
+    port.flush()
+
+    # --- wait for OK ---
+    response = read_until(port, OK_STRING, UPLOAD_TIMEOUT)
+
+    if OK_STRING not in response:
+        print(" FAILED!")
+        print(f"Received: {response!r}")
+        port.close()
+        sys.exit(1)
+
+    print(" OK")
+
+    # --- start execution ---
+    print("Starting application...")
+    port.write(b"e")
+    port.flush()
+
+    port.close()
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()
+\end{minted}
